@@ -121,7 +121,10 @@ class Config:
             "seed",
             "level_max_time"
         }:
-            return isinstance(value, int) and value > 0
+            return (
+                    isinstance(value, int)
+                    and not isinstance(value, bool)
+                    and value > 0)
         return False
 
     def _validate_levels(self, levels: Any) -> bool:
@@ -149,7 +152,9 @@ class Config:
                     f"Using default: {level['width']}"
                 )
 
-            elif not isinstance(level["width"], int) or level["width"] <= 0:
+            elif (
+                    type(level["width"]) is not int
+                    or level["width"] <= 0):
                 level["width"] = default_level["width"]
                 print(
                     f"[Warning] Invalid 'width' in level {level_number}. "
@@ -163,7 +168,9 @@ class Config:
                     f"Using default: {level['height']}"
                 )
 
-            elif not isinstance(level["height"], int) or level["height"] <= 0:
+            elif (
+                    type(level["height"]) is not int
+                    or level["height"] <= 0):
                 level["height"] = default_level["height"]
                 print(
                     f"[Warning] Invalid 'height' in level {level_number}. "
