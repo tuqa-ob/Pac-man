@@ -14,15 +14,17 @@ class Config:
             "seed": 42,
             "level_max_time": 90,
             "level": [
-                {
-                    "width": 10,
-                    "height": 10
-                },
-                {
-                    "width": 15,
-                    "height": 10
-                }
-            ]
+                {"width": 10, "height": 10},
+                {"width": 15, "height": 10},
+                {"width": 20, "height": 10},
+                {"width": 20, "height": 15},
+                {"width": 25, "height": 15},
+                {"width": 25, "height": 20},
+                {"width": 30, "height": 20},
+                {"width": 30, "height": 25},
+                {"width": 35, "height": 25},
+                {"width": 40, "height": 30}
+                ]
         }
 
         self.data: Dict[str, Any] = self.default_values.copy()
@@ -128,22 +130,27 @@ class Config:
         return False
 
     def _validate_levels(self, levels: Any) -> bool:
-        if not isinstance(levels, list) or not levels:
-            print("[Warning] Invalid 'level'. Using default levels.")
+        if not isinstance(levels, list) or len(levels) < 10:
+            print("[Warning] Invalid 'level'."
+                  "At least 10 levels are required. Using default levels."
+                  )
             return False
 
         for i, level in enumerate(levels):
             level_number = i + 1
+
+            if i < len(self.default_values["level"]):
+                default_level = self.default_values["level"][i]
+            else:
+                default_level = self.default_values["level"][-1]
 
             if not isinstance(level, dict):
                 print(
                     f"[Warning] Invalid level {level_number}. "
                     f"Using default."
                 )
-                levels[i] = self.default_values["level"][i].copy()
+                levels[i] = default_level.copy()
                 continue
-
-            default_level = self.default_values["level"][i]
 
             if "width" not in level:
                 level["width"] = default_level["width"]
