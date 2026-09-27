@@ -1,6 +1,11 @@
 from mazegenerator import MazeGenerator
 
-class MazeAdabter:
+
+class MazeGenerationError(Exception):
+    """Raised when the external maze generator fails to build a maze."""
+
+
+class MazeAdapter:
     """Adapt the external maze generator for the Pac-Man game."""
 
     NORTH = 1
@@ -11,20 +16,33 @@ class MazeAdabter:
     def __init__(self, width: int, height: int, seed: int) -> None:
         """Initialize the maze adapter."""
         self.width = width
-        self.height = height = height
+        self.height = height
         self.seed = seed
         self._maze: list[list[int]] = []
 
     def generate(self) -> None:
-        """Generate a new maze."""
+        """Generate a new maze.
+           
+           Raises:
+            MazeGenerationError: if the external generator fails for
+                this width, height and seed.
+
+        """
+        try:
+
+            generator = MazeGenerator(
+                    size=(self.width, self.height),
+                    entry_cell=(0, 0),
+                    exit_cell=(self.width - 1, self.height - 1),
+                    perfect=False,
+                    seed=self.seed,
+                    )
+        except Exception as e:
+            raise MazeGenerationError(
+                    f"Failed to generate a {self.width}x{self.height} maze "
+                    f"(seed={self.seed}): {e}"
+            ) from e
         
-        generator = MazeGenerator(
-                size=(self.width, self.height),
-                entry_cell=(0, 0),
-                exit_cell=(self.width - 1, self.height - 1),
-                perfect=False,
-                seed=self.seed,
-                )
         self._maze = generator.maze
 
     @property
