@@ -1,5 +1,16 @@
 from collections import deque
 
+from pm_game.adapter import MazeAdapter
+from pm_game.direction import Direction
+
+# Which wall bit blocks a step in each direction.
+WALL_BIT: dict[Direction, int] = {
+    Direction.UP: MazeAdapter.NORTH,
+    Direction.RIGHT: MazeAdapter.EAST,
+    Direction.DOWN: MazeAdapter.SOUTH,
+    Direction.LEFT: MazeAdapter.WEST,
+}
+
 
 def find_nearest_free_cell(
     maze: list[list[int]], width: int, height: int, x: int, y: int
@@ -212,3 +223,22 @@ class Level:
     def is_cleared(self) -> bool:
         """Return True when every pacgum and super-pacgum has been eaten."""
         return not self.pacgum_positions and not self.super_pacgum_positions
+
+    def can_move(self, x: int, y: int, direction: Direction) -> bool:
+        """Return True if a character at (x, y) can step in a direction.
+
+        Args:
+            x: column of the current cell.
+            y: row of the current cell.
+            direction: the way the character wants to move.
+
+        Returns:
+            False if there is a wall on that side or the step would
+            leave the maze, True otherwise.
+        """
+        if self.maze[y][x] & WALL_BIT[direction]:
+            return False
+
+        dx, dy = direction.value
+        nx, ny = x + dx, y + dy
+        return 0 <= nx < self.width and 0 <= ny < self.height

@@ -22,7 +22,7 @@ class MazeAdapter:
 
     def generate(self) -> None:
         """Generate a new maze.
-       
+
            Raises:
             MazeGenerationError: if the external generator fails for
                 this width, height and seed.
