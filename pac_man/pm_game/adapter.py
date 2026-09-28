@@ -22,7 +22,7 @@ class MazeAdapter:
 
     def generate(self) -> None:
         """Generate a new maze.
-           
+       
            Raises:
             MazeGenerationError: if the external generator fails for
                 this width, height and seed.
@@ -42,7 +42,7 @@ class MazeAdapter:
                     f"Failed to generate a {self.width}x{self.height} maze "
                     f"(seed={self.seed}): {e}"
             ) from e
-        
+
         self._maze = generator.maze
 
     @property
@@ -51,9 +51,16 @@ class MazeAdapter:
 
         return self._maze
 
-    def has_wall(self, row: int, column: int, direction: int) -> bool:
-        """Return True if a cell has a wall in the given direction."""
+    def has_wall(self, x: int, y: int, direction: int) -> bool:
+        """Return True if a cell has a wall in the given direction.
 
-        cell = self._maze[row][column]
+        Args:
+            x: column of the cell.
+            y: row of the cell.
+            direction: NORTH, EAST, SOUTH or WEST.
+
+        Returns:
+            True if the cell has a wall on that side.
+        """
+        cell = self._maze[y][x]
         return bool(cell & direction)
-

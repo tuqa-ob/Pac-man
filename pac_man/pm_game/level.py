@@ -54,11 +54,10 @@ def find_nearest_free_cell(
 def get_player_spawn(
         maze: list[list[int]], width: int, height: int
         ) -> tuple[int, int]:
-
     """Return the player's spawn point, at or near the center of the maze."""
     return find_nearest_free_cell(
-            maze, width, height, width // 2, height // 2
-            )
+        maze, width, height, width // 2, height // 2
+    )
 
 
 def get_corners(width: int, height: int) -> list[tuple[int, int]]:
@@ -109,11 +108,10 @@ def get_super_pacgum_positions(
     return get_corners(width, height)
 
 
-def get_pacgum_postions(
+def get_pacgum_positions(
         maze: list[list[int]], width: int, height: int,
         reserved: set[tuple[int, int]]
         ) -> list[tuple[int, int]]:
-
     """Return every free cell that isn't reserved for something else.
 
     Args:
@@ -134,3 +132,83 @@ def get_pacgum_postions(
                     free.append((x, y))
 
     return free
+
+
+class Level:
+    """Represent one complete Pac-Man level.
+
+    Attributes:
+        maze: the maze grid, indexed as maze[y][x].
+        width: number of columns.
+        height: number of rows.
+        player_spawn: (x, y) where the player starts and respawns.
+        ghost_spawns: the 4 (x, y) cells where the ghosts start.
+        super_pacgum_positions: (x, y) cells still holding a super-pacgum.
+        pacgum_positions: (x, y) cells still holding a normal pacgum.
+    """
+
+    def __init__(
+        self,
+        maze: list[list[int]],
+        width: int,
+        height: int,
+    ) -> None:
+        """Create a complete level from a maze.
+
+        Args:
+            maze: the maze grid, indexed as maze[y][x].
+            width: number of columns.
+            height: number of rows.
+        """
+        self.maze = maze
+        self.width = width
+        self.height = height
+
+        self.player_spawn = get_player_spawn(maze, width, height)
+        self.ghost_spawns = get_ghost_spawns(width, height)
+        self.super_pacgum_positions = set(
+            get_super_pacgum_positions(width, height)
+        )
+
+        # Cells that must not contain a normal pacgum.
+        reserved = set(self.ghost_spawns)
+        reserved.add(self.player_spawn)
+        reserved.update(self.super_pacgum_positions)
+
+        self.pacgum_positions = set(
+            get_pacgum_positions(maze, width, height, reserved)
+        )
+
+    def eat_pacgum(self, x: int, y: int) -> bool:
+        """Remove the normal pacgum at (x, y), if there is one.
+
+        Args:
+            x: column of the cell.
+            y: row of the cell.
+
+        Returns:
+            True if a pacgum was eaten, False if the cell had none.
+        """
+        if (x, y) in self.pacgum_positions:
+            self.pacgum_positions.remove((x, y))
+            return True
+        return False
+
+    def eat_super_pacgum(self, x: int, y: int) -> bool:
+        """Remove the super-pacgum at (x, y), if there is one.
+
+        Args:
+            x: column of the cell.
+            y: row of the cell.
+
+        Returns:
+            True if a super-pacgum was eaten, False if the cell had none.
+        """
+        if (x, y) in self.super_pacgum_positions:
+            self.super_pacgum_positions.remove((x, y))
+            return True
+        return False
+
+    def is_cleared(self) -> bool:
+        """Return True when every pacgum and super-pacgum has been eaten."""
+        return not self.pacgum_positions and not self.super_pacgum_positions
