@@ -1,6 +1,6 @@
 import json
 from typing import Any, Dict
-
+from copy import deepcopy
 
 class Config:
     def __init__(self, file_path: str = "") -> None:
@@ -27,7 +27,7 @@ class Config:
                 ]
         }
 
-        self.data: Dict[str, Any] = self.default_values.copy()
+        self.data: Dict[str, Any] = deepcopy(self.default_values)
 
         if file_path:
             self.load(file_path)
@@ -92,8 +92,10 @@ class Config:
                 continue
 
             if key == "level":
-                self._validate_levels(value)
-                self.data["level"] = value
+                if self._validate_levels(value):
+                    self.data["level"] = value
+                else:
+                    self.data["level"] = self.default_values["level"]
                 continue
 
             if self._is_valid(key, value):

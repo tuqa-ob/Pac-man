@@ -1,10 +1,5 @@
 from mazegenerator import MazeGenerator
 
-
-class MazeGenerationError(Exception):
-    """Raised when the external maze generator fails to build a maze."""
-
-
 class MazeAdapter:
     """Adapt the external maze generator for the Pac-Man game."""
 
@@ -16,20 +11,14 @@ class MazeAdapter:
     def __init__(self, width: int, height: int, seed: int) -> None:
         """Initialize the maze adapter."""
         self.width = width
-        self.height = height
+        self.height = height = height
         self.seed = seed
         self._maze: list[list[int]] = []
 
     def generate(self) -> None:
-        """Generate a new maze.
-
-           Raises:
-            MazeGenerationError: if the external generator fails for
-                this width, height and seed.
-
-        """
+        """Generate a new maze."""
+        
         try:
-
             generator = MazeGenerator(
                     size=(self.width, self.height),
                     entry_cell=(0, 0),
@@ -37,13 +26,9 @@ class MazeAdapter:
                     perfect=False,
                     seed=self.seed,
                     )
+            self._maze = generator.maze
         except Exception as e:
-            raise MazeGenerationError(
-                    f"Failed to generate a {self.width}x{self.height} maze "
-                    f"(seed={self.seed}): {e}"
-            ) from e
-
-        self._maze = generator.maze
+            print(f"[Warning] Failed to generate maze: {e}")
 
     @property
     def maze(self) -> list[list[int]]:
@@ -51,16 +36,9 @@ class MazeAdapter:
 
         return self._maze
 
-    def has_wall(self, x: int, y: int, direction: int) -> bool:
-        """Return True if a cell has a wall in the given direction.
+    def has_wall(self, row: int, column: int, direction: int) -> bool:
+        """Return True if a cell has a wall in the given direction."""
 
-        Args:
-            x: column of the cell.
-            y: row of the cell.
-            direction: NORTH, EAST, SOUTH or WEST.
-
-        Returns:
-            True if the cell has a wall on that side.
-        """
-        cell = self._maze[y][x]
+        cell = self._maze[row][column]
         return bool(cell & direction)
+
