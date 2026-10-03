@@ -11,7 +11,7 @@ class MazeAdapter:
     def __init__(self, width: int, height: int, seed: int) -> None:
         """Initialize the maze adapter."""
         self.width = width
-        self.height = height
+        self.height = height = height
         self.seed = seed
         self._maze: list[list[int]] = []
 

@@ -1,5 +1,10 @@
 import sys
+import pygame
 from pm_game.config import Config
+from pm_game.game import Game
+from pm_game.player import Player
+from pm_game.input import change_dir
+from pm_game.render import Renderer
 
 
 def main() -> None:
@@ -10,22 +15,37 @@ def main() -> None:
     config_path = sys.argv[1]
     print(f"Loading game with config : {config_path}")
     config = Config(config_path)
+    game = Game(config)
+    game.load_level()
     file_name = config.get("highscore_filename")
-    pacgum = config.get("pacgum")
-    points_gum = config.get("points_per_pacgum")
-    points_sgum = config.get("points_per_super_pacgum")
-    points_ghost = config.get("points_per_ghost")
-    time = config.get("level_max_time")
-    levels = config.get("level")
     lives = config.get("lives")
     seed = config.get("seed")
 
     print("Game Settings Loaded Successfully:")
-    print(f"{file_name} , {pacgum} , {points_gum}, {points_sgum}"
-          f", {points_ghost}, {time}, {levels}")
     print(f" - Initial Lives: {lives}")
     print(f" - Maze Seed: {seed}")
-
+    print(game.player.curr_row, game.player.curr_col)
+    pygame.init()
+    screen = pygame.display.set_mode((600, 600), pygame.RESIZABLE)
+    renderer = Renderer(screen, game.maze)
+    print(renderer.cell_size)
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.VIDEORESIZE:
+                screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
+                renderer.update_screen(screen)
+            elif event.type == pygame.KEYDOWN:
+                if change_dir(game.player, event.key):
+                    game.move_player()
+                print(game.player.curr_row, game.player.curr_col)
+        screen.fill((0, 0, 0))
+        renderer.draw_maze()
+        renderer.draw_player(game.player)
+        pygame.display.flip()
+    pygame.quit()
 
 if __name__ == "__main__":
     main()
