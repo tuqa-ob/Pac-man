@@ -29,6 +29,7 @@ def main() -> None:
     screen = pygame.display.set_mode((600, 600), pygame.RESIZABLE)
     renderer = Renderer(screen, game.maze)
     print(renderer.cell_size)
+    print(len(game.pacgums))
     running = True
     while running:
         for event in pygame.event.get():
@@ -41,7 +42,9 @@ def main() -> None:
                 if change_dir(game.player, event.key):
                     game.move_player()
                 print(game.player.curr_row, game.player.curr_col)
+                print(game.score)
         screen.fill((0, 0, 0))
+        renderer.draw_pac_gum(game.pacgums)
         renderer.draw_maze()
         renderer.draw_player(game.player)
         pygame.display.flip()
