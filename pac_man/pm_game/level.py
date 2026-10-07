@@ -3,6 +3,13 @@ from pm_game.adapter import MazeAdapter
 from pm_game.direction import Direction
 
 
+DIRECTION_TO_WALL = {
+    Direction.UP: MazeAdapter.NORTH,
+    Direction.RIGHT: MazeAdapter.EAST,
+    Direction.DOWN: MazeAdapter.SOUTH,
+    Direction.LEFT: MazeAdapter.WEST,
+}
+
 def get_corners(width: int, height: int) -> list[tuple[int, int]]:
     """Return the 4 corner coordinates of a width x height grid.
 
@@ -137,16 +144,17 @@ class Level:
         """Return True when every pacgum and super-pacgum has been eaten."""
         return not self.pacgum_positions and not self.super_pacgum_positions
 
-    def can_move(self, row: int, col: int, direction: int) -> bool:
-        """Return True if a character at (x, y) can step in a direction.
+    def can_move(self, row: int, col: int, direction: Direction) -> bool:
+        """Return True if a character at (r, c) can step in a direction.
 
         Args:
-            x: column of the current cell.
-            y: row of the current cell.
+            c: column of the current cell.
+            r: row of the current cell.
             direction: the way the character wants to move.
 
         Returns:
             False if there is a wall on that side or the step would
             leave the maze, True otherwise.
         """
+        wall_direction = DIRECTION_TO_WALL[direction]
         return not self.maze.has_wall(row, col, direction)
