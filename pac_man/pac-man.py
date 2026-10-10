@@ -30,8 +30,10 @@ def main() -> None:
     renderer = Renderer(screen, game.maze)
     print(renderer.cell_size)
     print(len(game.level.pacgum_positions))
+    clock = pygame.time.Clock()
     running = True
     while running:
+        dt = clock.tick(60) / 1000
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -43,10 +45,23 @@ def main() -> None:
                     game.move_player()
                 print(game.player.curr_row, game.player.curr_col)
                 print(game.score)
+                print(game.lives)
+        for ghost in game.ghosts:
+            ghost.update(
+                    dt,
+                    game.level,
+                    game.player.curr_row,
+                    game.player.curr_col
+                    )
+            game.check_collisions()
         screen.fill((0, 0, 0))
         renderer.draw_pac_gum(game.level.pacgum_positions)
+        renderer.draw_super_pacgum(
+                game.level.super_pacgum_positions)
         renderer.draw_maze()
         renderer.draw_player(game.player)
+        for ghost in game.ghosts:
+            renderer.draw_ghost(ghost)
         pygame.display.flip()
     pygame.quit()
 

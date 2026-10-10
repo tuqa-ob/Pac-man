@@ -62,18 +62,18 @@ class Level:
     """Represent one complete Pac-Man level.
 
     Attributes:
-        maze: the maze grid, indexed as maze[y][x].
+        maze: the maze grid, indexed as maze[row][col].
         width: number of columns.
         height: number of rows.
-        player_spawn: (x, y) where the player starts and respawns.
-        ghost_spawns: the 4 (x, y) cells where the ghosts start.
-        super_pacgum_positions: (x, y) cells still holding a super-pacgum.
-        pacgum_positions: (x, y) cells still holding a normal pacgum.
+        player_spawn: (row, col) where the player starts and respawns.
+        ghost_spawns: the 4 (row, col) cells where the ghosts start.
+        super_pacgum_positions: (row, col) cells still holding a super-pacgum.
+        pacgum_positions: (row, col) cells still holding a normal pacgum.
     """
 
     def __init__(
         self,
-        maze: list[list[int]],
+        maze: MazeAdapter,
         width: int,
         height: int,
     ) -> None:
@@ -157,4 +157,4 @@ class Level:
             leave the maze, True otherwise.
         """
         wall_direction = DIRECTION_TO_WALL[direction]
-        return not self.maze.has_wall(row, col, direction)
+        return not self.maze.has_wall(row, col, wall_direction)

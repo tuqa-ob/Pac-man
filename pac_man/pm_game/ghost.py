@@ -88,8 +88,9 @@ class Ghost:
         self,
         row: int,
         col: int,
+        color: str = "red",
         chases: bool = True,
-        move_interval: float = 0.2,
+        move_interval: float = 0.5,
         edible_duration: float = 8.0,
         eaten_duration: float = 5.0,
         seed: int | None = None,
@@ -99,6 +100,7 @@ class Ghost:
         Args:
             col: starting column, its home corner.
             row: starting row, its home corner.
+            color: color of ghost.
             chases: if True, moves toward the player while CHASE-ing.
                 If False, wanders randomly instead.
             move_interval: seconds between one step and the next.
@@ -110,6 +112,7 @@ class Ghost:
         self.current_col = col
         self.home_row = row
         self.home_col = col
+        self.color = color
         self.chases = chases
         self.state = GhostState.CHASE
         self.move_interval = move_interval
@@ -130,6 +133,14 @@ class Ghost:
         """Switch to EATEN (e.g. the player just touched this ghost)."""
         self.state = GhostState.EATEN
         self.eaten_timer = self.eaten_duration
+
+    def reset_position(self) -> None:
+        self.current_row = self.home_row
+        self.current_col = self.home_col
+        self.state = GhostState.CHASE
+        self.edible_timer = 0.0
+        self.eaten_timer = 0.0
+        self.move_timer = 0.0
 
     def update(
         self, dt: float, level: Level, player_row: int, player_col: int
@@ -177,7 +188,8 @@ class Ghost:
         for direction in Direction:
             if level.can_move(self.current_row, self.current_col, direction):
                 legal_directions.append(direction)
-
+        if not legal_directions:
+            return
         chosen = self.random.choice(legal_directions)
         drow, dcol = chosen.value
         self.current_row += drow
