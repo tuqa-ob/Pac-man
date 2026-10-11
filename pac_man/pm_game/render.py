@@ -147,6 +147,11 @@ class Renderer:
                 True,
                 (255, 255, 255))
 
+        self._screen.blit(score_text, (10, 10))
+        self._screen.blit(lives_text, (200, 10))
+        self._screen.blit(level_text, (350, 10))
+
+
     def draw_ghost(self, ghost: Ghost) -> None:
         cell = self.cell_size
         offset_x, offset_y = self.calculate_pos()
@@ -158,3 +163,62 @@ class Renderer:
             image = self.ghost_images[ghost.color]
         image = pygame.transform.scale(image, (cell, cell))
         self._screen.blit(image, (x, y))
+
+    def update_maze(self, maze: MazeAdapter) -> None:
+        """Update the maze used by the renderer."""
+        self._maze = maze
+        self._cell_width = (
+            self._screen.get_width() // maze.width
+        )
+        self._cell_height = (
+            self._screen.get_height() // maze.height
+        )
+        self.cell_size = min(
+            self._cell_width,
+            self._cell_height
+        )
+
+
+
+    def draw_game_over(self, score: int) -> None:
+        """Draw the Game Over screen."""
+        font = pygame.font.Font(None, 64)
+        score_font = pygame.font.Font(None, 36)
+        message = font.render("GAME OVER", True, (255, 0, 0))
+        score_text = score_font.render(
+            f"Final Score: {score}", True, (255, 255, 255)
+        )
+
+        screen_width, screen_height = self._screen.get_size()
+
+        message_rect = message.get_rect(
+            center=(screen_width // 2, screen_height // 2 - 40)
+        )
+        score_rect = score_text.get_rect(
+            center=(screen_width // 2, screen_height // 2 + 30)
+        )
+
+        self._screen.blit(message, message_rect)
+        self._screen.blit(score_text, score_rect)
+
+
+    def draw_victory(self, score: int) -> None:
+        """Draw the victory screen."""
+        font = pygame.font.Font(None, 64)
+        score_font = pygame.font.Font(None, 36)
+        message = font.render("YOU WIN!", True, (0, 255, 0))
+        score_text = score_font.render(
+            f"Final Score: {score}", True, (255, 255, 255)
+        )
+
+        screen_width, screen_height = self._screen.get_size()
+
+        message_rect = message.get_rect(
+            center=(screen_width // 2, screen_height // 2 - 40)
+        )
+        score_rect = score_text.get_rect(
+            center=(screen_width // 2, screen_height // 2 + 30)
+        )
+
+        self._screen.blit(message, message_rect)
+        self._screen.blit(score_text, score_rect)

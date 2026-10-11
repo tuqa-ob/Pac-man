@@ -15,6 +15,8 @@ class Game:
         self.player = None
         self.ghosts = []
         self.pac_gum_num = self._config.get("pacgum")
+        self.game_won = False
+        self.game_over = False
 
     def load_level(self) -> None:
         levels = self._config.get("level")
@@ -77,6 +79,10 @@ class Game:
                 ghost.become_edible()
 
     def check_collisions(self) -> None:
+
+        if self.game_over or self.game_won:
+            return
+
         for ghost in self.ghosts:
             if (
                 ghost.current_row == self.player.curr_row
@@ -84,6 +90,12 @@ class Game:
             ):
                 if ghost.state == GhostState.CHASE:
                     self.lives -= 1
+
+                    if self.lives <= 0:
+                        self.lives = 0
+                        self.game_over = True
+                        return
+
                     self.player = Player(self.level.width, self.level.height)
                     ghost.reset_position()
                     break
@@ -92,3 +104,24 @@ class Game:
                     ghost.get_eaten()
                 elif ghost.state == GhostState.EATEN:
                     continue
+
+    def advance_level_if_cleared(self) -> bool:
+
+        """Advance to the next level if the current one is cleared.
+
+        Returns:
+        True if a new level was loaded, otherwise False.
+        """
+
+        if not self.level.is_cleared():
+            return False
+
+        levels = self._config.get("level")
+
+        if self.current_level >= len(levels):
+            self.game_won = True
+            return False
+
+        self.current_level += 1
+        self.load_level()
+        return True

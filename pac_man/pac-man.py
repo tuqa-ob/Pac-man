@@ -46,22 +46,37 @@ def main() -> None:
                 print(game.player.curr_row, game.player.curr_col)
                 print(game.score)
                 print(game.lives)
-        for ghost in game.ghosts:
-            ghost.update(
-                    dt,
-                    game.level,
-                    game.player.curr_row,
-                    game.player.curr_col
-                    )
+
+        if not game.game_over and not game.game_won:
+            for ghost in game.ghosts:
+                ghost.update(
+                        dt,
+                        game.level,
+                        game.player.curr_row,
+                        game.player.curr_col
+                        )
             game.check_collisions()
+
+        if not game.game_won:
+            if game.advance_level_if_cleared():
+                renderer.update_maze(game.maze)
+
         screen.fill((0, 0, 0))
-        renderer.draw_pac_gum(game.level.pacgum_positions)
-        renderer.draw_super_pacgum(
-                game.level.super_pacgum_positions)
-        renderer.draw_maze()
-        renderer.draw_player(game.player)
-        for ghost in game.ghosts:
-            renderer.draw_ghost(ghost)
+
+        if game.game_over:
+            renderer.draw_game_over(game.score)
+        elif game.game_won:
+            renderer.draw_victory(game.score)
+        else:
+            renderer.draw_pac_gum(game.level.pacgum_positions)
+            renderer.draw_super_pacgum(
+                    game.level.super_pacgum_positions)
+            renderer.draw_maze()
+            renderer.draw_player(game.player)
+            renderer.draw_hud(game.score, game.lives, game.current_level)
+            for ghost in game.ghosts:
+                renderer.draw_ghost(ghost)
+
         pygame.display.flip()
     pygame.quit()
 
