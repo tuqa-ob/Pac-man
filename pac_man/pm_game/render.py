@@ -180,45 +180,127 @@ class Renderer:
 
 
 
-    def draw_game_over(self, score: int) -> None:
+    def draw_game_over(self, score: int, player_name: str = "") -> None:
         """Draw the Game Over screen."""
         font = pygame.font.Font(None, 64)
         score_font = pygame.font.Font(None, 36)
+        input_font = pygame.font.Font(None, 32)
+        instruction_font = pygame.font.Font(None, 26)
+
         message = font.render("GAME OVER", True, (255, 0, 0))
         score_text = score_font.render(
             f"Final Score: {score}", True, (255, 255, 255)
         )
 
+        name_label = input_font.render(
+                "Enter your name:", True, (255, 255, 255)
+                )
+
+        name_text = input_font.render(
+                player_name + "_", True, (255, 255, 0)
+                )
+
+        instruction = instruction_font.render(
+            "Press ENTER to submit", True, (200, 200, 200)
+            )
+
         screen_width, screen_height = self._screen.get_size()
 
-        message_rect = message.get_rect(
-            center=(screen_width // 2, screen_height // 2 - 40)
+        center_x = screen_width // 2
+        center_y = screen_height // 2
+
+        self._screen.blit(
+            message,
+            message.get_rect(center=(center_x, center_y - 110)),
         )
-        score_rect = score_text.get_rect(
-            center=(screen_width // 2, screen_height // 2 + 30)
+        self._screen.blit(
+            score_text,
+            score_text.get_rect(center=(center_x, center_y - 45)),
+        )
+        self._screen.blit(
+            name_label,
+            name_label.get_rect(center=(center_x, center_y + 10)),
         )
 
-        self._screen.blit(message, message_rect)
-        self._screen.blit(score_text, score_rect)
+        input_rect = pygame.Rect(
+            center_x - 150, center_y + 35, 300, 45
+        )
+        pygame.draw.rect(
+            self._screen, (60, 60, 80), input_rect, border_radius=5
+        )
+        pygame.draw.rect(
+            self._screen, (255, 255, 0), input_rect, 2,
+            border_radius=5,
+        )
+        self._screen.blit(
+            name_text,
+            name_text.get_rect(
+                midleft=(input_rect.left + 10, input_rect.centery)
+            ),
+        )
+        self._screen.blit(
+            instruction,
+            instruction.get_rect(center=(center_x, center_y + 110)),
+        )
 
 
-    def draw_victory(self, score: int) -> None:
+    def draw_victory(self, score: int, player_name: str = "") -> None:
         """Draw the victory screen."""
         font = pygame.font.Font(None, 64)
         score_font = pygame.font.Font(None, 36)
+        input_font = pygame.font.Font(None, 32)
+        instruction_font = pygame.font.Font(None, 26)
+
         message = font.render("YOU WIN!", True, (0, 255, 0))
         score_text = score_font.render(
             f"Final Score: {score}", True, (255, 255, 255)
         )
 
+        name_label = input_font.render(
+            "Enter your name:", True, (255, 255, 255)
+        )
+        name_text = input_font.render(
+            player_name + "_", True, (255, 255, 0)
+        )
+        instruction = instruction_font.render(
+            "Press ENTER to submit", True, (200, 200, 200)
+        )
+
         screen_width, screen_height = self._screen.get_size()
+        center_x = screen_width // 2
+        center_y = screen_height // 2
 
-        message_rect = message.get_rect(
-            center=(screen_width // 2, screen_height // 2 - 40)
+        self._screen.blit(
+            message,
+            message.get_rect(center=(center_x, center_y - 110)),
         )
-        score_rect = score_text.get_rect(
-            center=(screen_width // 2, screen_height // 2 + 30)
+        self._screen.blit(
+            score_text,
+            score_text.get_rect(center=(center_x, center_y - 45)),
+        )
+        self._screen.blit(
+            name_label,
+            name_label.get_rect(center=(center_x, center_y + 10)),
         )
 
-        self._screen.blit(message, message_rect)
-        self._screen.blit(score_text, score_rect)
+        input_rect = pygame.Rect(
+            center_x - 150, center_y + 35, 300, 45
+        )
+        pygame.draw.rect(
+            self._screen, (60, 60, 80), input_rect, border_radius=5
+        )
+        pygame.draw.rect(
+            self._screen, (255, 255, 0), input_rect, 2,
+            border_radius=5,
+        )
+        self._screen.blit(
+            name_text,
+            name_text.get_rect(
+                midleft=(input_rect.left + 10, input_rect.centery)
+            ),
+        )
+        self._screen.blit(
+            instruction,
+            instruction.get_rect(center=(center_x, center_y + 110)),
+        )
+

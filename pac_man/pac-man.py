@@ -5,7 +5,7 @@ from pm_game.game import Game
 from pm_game.player import Player
 from pm_game.input import change_dir
 from pm_game.render import Renderer
-
+from pm_game.highscore import Highscore
 
 def main() -> None:
     """main entry point to pac-man game"""
@@ -20,7 +20,8 @@ def main() -> None:
     file_name = config.get("highscore_filename")
     lives = config.get("lives")
     seed = config.get("seed")
-
+    highscore = Highscore(file_name)
+    
     print("Game Settings Loaded Successfully:")
     print(f" - Initial Lives: {lives}")
     print(f" - Maze Seed: {seed}")
@@ -40,12 +41,35 @@ def main() -> None:
             elif event.type == pygame.VIDEORESIZE:
                 screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
                 renderer.update_screen(screen)
+            
             elif event.type == pygame.KEYDOWN:
-                if change_dir(game.player, event.key):
-                    game.move_player()
-                print(game.player.curr_row, game.player.curr_col)
-                print(game.score)
-                print(game.lives)
+
+                if game.entering_name:
+                    if event.key == pygame.K_BACKSPACE:
+                        game.player_name = game.player_name[:-1]
+
+                    elif event.key == pygame.K_RETURN:
+                        highscore.add_score(game.player_name, game.score)
+                        game.entering_name = False
+
+                    elif (event.unicode
+                          and event.unicode.isprintable()
+                          and (event.unicode.isalnum()
+                               or event.unicode == " ")
+                          and len(game.player_name) < 10
+                          ):
+                        game.player_name += event.unicode
+
+                elif not game.game_over and not game.game_won:
+                    if change_dir(game.player, event.key):
+                        game.move_player()
+
+                        print(game.player.curr_row, game.player.curr_col)
+                        print(game.score)
+                        print(game.lives)
+
+        if (game.game_over or game.game_won) and not game.show_leaderboard:
+            game.entering_name = True
 
         if not game.game_over and not game.game_won:
             for ghost in game.ghosts:
@@ -64,9 +88,9 @@ def main() -> None:
         screen.fill((0, 0, 0))
 
         if game.game_over:
-            renderer.draw_game_over(game.score)
+            renderer.draw_game_over(game.score, game.player_name)
         elif game.game_won:
-            renderer.draw_victory(game.score)
+            renderer.draw_victory(game.score, game.player_name)
         else:
             renderer.draw_pac_gum(game.level.pacgum_positions)
             renderer.draw_super_pacgum(

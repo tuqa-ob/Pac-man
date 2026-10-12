@@ -17,6 +17,10 @@ class Game:
         self.pac_gum_num = self._config.get("pacgum")
         self.game_won = False
         self.game_over = False
+        self.player_name = ""
+        self.entering_name = False
+        self.show_leaderboard = False
+
 
     def load_level(self) -> None:
         levels = self._config.get("level")
