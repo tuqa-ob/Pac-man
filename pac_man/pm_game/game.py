@@ -19,7 +19,6 @@ class Game:
         self.game_over = False
         self.player_name = ""
         self.entering_name = False
-        self.show_leaderboard = False
 
 
     def load_level(self) -> None:

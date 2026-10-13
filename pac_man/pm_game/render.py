@@ -35,6 +35,12 @@ class Renderer:
                     str(assets_dir / "eaten.png")
                     ).convert_alpha()
                 }
+        try:
+            self.menu_bg = pygame.image.load(
+                str(assets_dir / "menu.png")
+            ).convert()
+        except (pygame.error, FileNotFoundError):
+            self.menu_bg = None
 
     def calculate_pos(self) -> tuple[int, int]:
         cell = self.cell_size
@@ -303,4 +309,56 @@ class Renderer:
             instruction,
             instruction.get_rect(center=(center_x, center_y + 110)),
         )
+
+    def draw_main_menu(self, rects: dict[str, pygame.Rect]) -> None:
+        """Draw the main menu: title, buttons and tagline."""
+
+        width = self._screen.get_width()
+        height = self._screen.get_height()
+        
+        if self.menu_bg is not None:
+
+            background = pygame.transform.smoothscale(
+                self.menu_bg, (width, height)
+            )
+            self._screen.blit(background, (0, 0))
+
+        title_font = pygame.font.Font(None, height // 6)
+        button_font = pygame.font.Font(None, height // 14)
+        tag_font = pygame.font.Font(None, height // 28)
+        colors = [
+            (255, 255, 0),
+            (255, 192, 203),
+            (0, 0, 255),
+            (255, 128, 0),
+        ]
+
+        title = title_font.render("PAC-MAN", True, (255, 255, 0))
+        self._screen.blit(
+            title,
+            title.get_rect(center=(width // 2, height // 6)),
+        )
+        for (name, rect), color in zip(rects.items(), colors):
+            pygame.draw.rect(
+                self._screen,
+                color,
+                rect,
+                4,
+                border_radius=rect.height // 2,
+            )
+            text = button_font.render(name.upper(), True, (255, 255, 255))
+            self._screen.blit(text, text.get_rect(center=rect.center))
+
+        tagline = tag_font.render(
+            "EAT ALL DOTS - AVOID THE GHOSTS - BE THE CHAMPION!",
+            True,
+            (255, 255, 0),
+        )
+        self._screen.blit(
+            tagline,
+            tagline.get_rect(center=(width // 2, height - height // 12)),
+        )
+
+
+
 
