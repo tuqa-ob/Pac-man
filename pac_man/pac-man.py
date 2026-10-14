@@ -30,7 +30,7 @@ def main() -> None:
     print(game.player.curr_row, game.player.curr_col)
     
     pygame.init()
-    screen = pygame.display.set_mode((600, 600), pygame.RESIZABLE)
+    screen = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
     
     renderer = Renderer(screen, game.maze)
     rects = make_rects(screen.get_width(), screen.get_height())
@@ -55,7 +55,12 @@ def main() -> None:
                 choice = get_clicked_button(rects, event.pos)
                 if choice == "Start Game":
                     state = "playing"
+                    print("DEBUG: state changed to playyyy")
+                elif choice == "High Score":
+                    state = "highscores"
+                    print("DEBUG: state changed to highscores")
                 elif choice == "Exit Game":
+                    print("DEBUG: state changed to xxxxxxxxxxx")
                     running = False
 
             elif event.type == pygame.KEYDOWN:
@@ -67,6 +72,7 @@ def main() -> None:
                     elif event.key == pygame.K_RETURN:
                         highscore.add_score(game.player_name, game.score)
                         game.entering_name = False
+                        state = "menu"
 
                     elif (event.unicode
                           and event.unicode.isprintable()
@@ -104,7 +110,9 @@ def main() -> None:
         screen.fill((0, 0, 0))
 
         if state == "menu":
-            renderer.draw_main_menu(rects)
+            renderer.draw_main_menu(rects, pygame.mouse.get_pos())
+        elif state == "highscores":
+            renderer.draw_highscores(highscore.top())
         elif game.game_over:
             renderer.draw_game_over(game.score, game.player_name)
         elif game.game_won:

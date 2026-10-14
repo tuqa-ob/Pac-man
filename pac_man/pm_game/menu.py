@@ -15,12 +15,13 @@ def make_rects(width: int, height: int) -> dict[str, pygame.Rect]:
         height: window height in pixels.
     """
     rects = {}
-    button_w = width // 2
-    button_h = height // 12
-    gap = button_h // 4
+    button_h = int(height * 0.082)
+    button_w = int(button_h * 6.3)
+    gap = max(4, button_h // 10)
+    start_y = int(height * 0.40)
     for i, name in enumerate(BUTTONS):
         x = (width - button_w) // 2
-        y = height // 3 + i * (button_h + gap)
+        y = start_y + i * (button_h + gap)
         rects[name] = pygame.Rect(x, y, button_w, button_h)
     return rects
 

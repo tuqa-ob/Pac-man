@@ -156,9 +156,7 @@ class Ghost:
         if self.state == GhostState.EATEN:
             self.eaten_timer -= dt
             if self.eaten_timer <= 0:
-                self.current_row = self.home_row
-                self.current_col = self.home_col
-                self.state = GhostState.CHASE
+                self.reset_position()
             return
 
         if self.state == GhostState.EDIBLE:
