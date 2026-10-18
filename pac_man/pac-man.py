@@ -6,7 +6,7 @@ from pm_game.player import Player
 from pm_game.input import change_dir
 from pm_game.render import Renderer
 from pm_game.highscore import Highscore
-from pm_game.menu import BUTTONS, get_clicked_button, make_rects
+from pm_game.menu import get_clicked_button, make_rects
 
 
 def main() -> None:
@@ -54,18 +54,29 @@ def main() -> None:
             elif event.type == pygame.MOUSEBUTTONDOWN and state == "menu":
                 choice = get_clicked_button(rects, event.pos)
                 if choice == "Start Game":
+                    game = Game(config)
+                    game.load_level()
+                    renderer.update_maze(game.maze)
                     state = "playing"
                     print("DEBUG: state changed to playyyy")
-                elif choice == "High Score":
+                elif choice == "High Scores":
                     state = "highscores"
                     print("DEBUG: state changed to highscores")
                 elif choice == "Exit Game":
                     print("DEBUG: state changed to xxxxxxxxxxx")
                     running = False
+            
+            elif (event.type == pygame.MOUSEBUTTONDOWN
+                  and state == "highscores"):
+                state = "menu"
 
             elif event.type == pygame.KEYDOWN:
 
-                if game.entering_name:
+                if state == "highscores":
+                    if event.key == pygame.K_ESCAPE:
+                        state = "menu"
+
+                elif game.entering_name:
                     if event.key == pygame.K_BACKSPACE:
                         game.player_name = game.player_name[:-1]
 
@@ -107,7 +118,7 @@ def main() -> None:
             if game.advance_level_if_cleared():
                 renderer.update_maze(game.maze)
 
-        screen.fill((0, 0, 0))
+        screen.fill((4, 8, 28))
 
         if state == "menu":
             renderer.draw_main_menu(rects, pygame.mouse.get_pos())
@@ -118,10 +129,10 @@ def main() -> None:
         elif game.game_won:
             renderer.draw_victory(game.score, game.player_name)
         else:
+            renderer.draw_maze()
             renderer.draw_pac_gum(game.level.pacgum_positions)
             renderer.draw_super_pacgum(
                     game.level.super_pacgum_positions)
-            renderer.draw_maze()
             renderer.draw_player(game.player)
             renderer.draw_hud(game.score, game.lives, game.current_level)
             for ghost in game.ghosts:

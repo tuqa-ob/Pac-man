@@ -1,6 +1,7 @@
 NAME = pac-man.py
+VENV = .venv
 
-.PHONY: all install run debug lint clean
+.PHONY: all install run debug lint clean venv shell venv-run
 
 all: install
 
@@ -19,3 +20,9 @@ lint:
 
 clean:
 	rm -rf __pycache__ */__pycache__ .mypy_cache .pytest_cache
+
+venv:
+	test -d $(VENV) || python3 -m venv $(VENV)
+
+shell: venv
+	bash --rcfile $(VENV)/bin/activate

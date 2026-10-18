@@ -18,7 +18,7 @@ def make_rects(width: int, height: int) -> dict[str, pygame.Rect]:
     button_h = int(height * 0.082)
     button_w = int(button_h * 6.3)
     gap = max(4, button_h // 10)
-    start_y = int(height * 0.40)
+    start_y = int(height * 0.30)
     for i, name in enumerate(BUTTONS):
         x = (width - button_w) // 2
         y = start_y + i * (button_h + gap)

@@ -52,6 +52,21 @@ class Renderer:
         except (pygame.error, FileNotFoundError):
             self.menu_bg = None
 
+        try:
+            self.hs_bg = pygame.image.load(
+                str(assets_dir / "HS.png")
+            ).convert()
+        except (pygame.error, FileNotFoundError):
+            self.hs_bg = None
+
+        try:
+            self.maze_bg = pygame.image.load(
+                str(assets_dir / "maze.png")
+            ).convert()
+        except (pygame.error, FileNotFoundError):
+            self.maze_bg = None
+
+
     def calculate_pos(self) -> tuple[int, int]:
         cell = self.cell_size
         maze_width = self._maze.width * cell
@@ -67,47 +82,124 @@ class Renderer:
         except (pygame.error, FileNotFoundError):
             return pygame.font.Font(None, size)
 
-    def draw_maze(self) -> None:
+    def fit_maze(self) -> None:
+        """Choose the cell size so the maze fits between the side panels."""
+        avail_w = int(self._screen.get_width() * 0.5)
+        avail_h = int(self._screen.get_height() * 0.92)
+        self.cell_size = min(
+            avail_w // self._maze.width,
+            avail_h // self._maze.height,
+        )
+        self.build_maze_surface()
+
+
+    def maze_segments(self) -> list[tuple[tuple[int, int], tuple[int, int]]]:
+        """List every wall as two points, relative to the maze corner."""
         cell = self.cell_size
-        offset_x, offset_y = self.calculate_pos()
-        maze_width = self._maze.width * cell
-        maze_height = self._maze.height * cell
-        maze_right = offset_x + maze_width - 1
-        maze_bottom = offset_y + maze_height - 1
+        segments = []
         for r in range(self._maze.height):
             for c in range(self._maze.width):
+                x = c * cell
+                y = r * cell
                 if self._maze.has_wall(r, c, self.NORTH):
-                    pygame.draw.line(
-                        self._screen,
-                        (255, 255, 255),
-                        (offset_x + c * cell, offset_y + r * cell),
-                        (offset_x + (c + 1 ) * cell, offset_y + r * cell))
-                if self._maze.has_wall(r, c, self.EAST):
-                    if c == self._maze.width - 1:
-                        x = maze_right
-                    else:
-                        x = offset_x + (c + 1) * cell
-                    pygame.draw.line(
-                            self._screen,
-                            (255, 255, 255),
-                            (x, offset_y + r * cell),
-                            (x, offset_y + (r + 1) * cell))
-                if self._maze.has_wall(r, c, self.SOUTH):
-                    if r == self._maze.height - 1:
-                        y = maze_bottom 
-                    else:
-                        y = offset_y + (r + 1) * cell
-                    pygame.draw.line(
-                            self._screen,
-                            (255, 255, 255),
-                            (offset_x + c * cell, y),
-                            (offset_x + (c + 1) * cell, y))
+                    segments.append(((x, y), (x + cell, y)))
                 if self._maze.has_wall(r, c, self.WEST):
-                    pygame.draw.line(
-                            self._screen,
-                            (255, 255, 255),
-                            (offset_x + c * cell, offset_y + r * cell),
-                            (offset_x + c * cell, offset_y + (r + 1) * cell))
+                    segments.append(((x, y), (x, y + cell)))
+                if self._maze.has_wall(r, c, self.EAST):
+                    segments.append(((x + cell, y), (x + cell, y + cell)))
+                if self._maze.has_wall(r, c, self.SOUTH):
+                    segments.append(((x, y + cell), (x + cell, y + cell)))
+        return segments
+
+    def build_maze_surface(self) -> None:
+        """Draw the glowing neon maze once and keep it for every frame."""
+        cell = self.cell_size
+        self.maze_pad = max(8, cell // 2)
+        pad = self.maze_pad
+        size = (
+            self._maze.width * cell + 2 * pad,
+            self._maze.height * cell + 2 * pad,
+        )
+        thick = max(2, cell // 10)
+        segments = [
+            ((x1 + pad, y1 + pad), (x2 + pad, y2 + pad))
+            for (x1, y1), (x2, y2) in self.maze_segments()
+        ]
+
+        lines = pygame.Surface(size, pygame.SRCALPHA)
+        for start, end in segments:
+            pygame.draw.line(lines, (20, 110, 255), start, end, thick + 2)
+
+        # blur: shrink the lines, then enlarge them again
+        small = pygame.transform.smoothscale(
+            lines, (size[0] // 5, size[1] // 5)
+        )
+        glow = pygame.transform.smoothscale(small, size)
+
+        surface = pygame.Surface(size, pygame.SRCALPHA)
+        surface.blit(glow, (0, 0))
+        surface.blit(glow, (0, 0))
+        surface.blit(lines, (0, 0))
+        for start, end in segments:
+            pygame.draw.line(surface, (140, 210, 255), start, end, 1)
+        self.maze_surface = surface
+
+    def draw_maze(self) -> None:
+        """Draw the cached neon maze in the middle of the window."""
+        offset_x, offset_y = self.calculate_pos()
+        background = pygame.transform.scale(
+            self.maze_bg,
+            self._screen.get_size(),
+        )
+        self._screen.blit(background, (0, 0))
+
+        self._screen.blit(
+            self.maze_surface,
+            (offset_x - self.maze_pad, offset_y - self.maze_pad),
+        )
+
+
+#   def draw_maze(self) -> None:
+#       cell = self.cell_size
+#       offset_x, offset_y = self.calculate_pos()
+#       maze_width = self._maze.width * cell
+#       maze_height = self._maze.height * cell
+#       maze_right = offset_x + maze_width - 1
+#       maze_bottom = offset_y + maze_height - 1
+#       for r in range(self._maze.height):
+#           for c in range(self._maze.width):
+#               if self._maze.has_wall(r, c, self.NORTH):
+#                   pygame.draw.line(
+#                       self._screen,
+#                       (255, 255, 255),
+#                       (offset_x + c * cell, offset_y + r * cell),
+#                       (offset_x + (c + 1 ) * cell, offset_y + r * cell))
+#               if self._maze.has_wall(r, c, self.EAST):
+#                   if c == self._maze.width - 1:
+#                       x = maze_right
+#                   else:
+#                       x = offset_x + (c + 1) * cell
+#                   pygame.draw.line(
+#                           self._screen,
+#                           (255, 255, 255),
+#                           (x, offset_y + r * cell),
+#                           (x, offset_y + (r + 1) * cell))
+#               if self._maze.has_wall(r, c, self.SOUTH):
+#                   if r == self._maze.height - 1:
+#                       y = maze_bottom 
+#                   else:
+#                       y = offset_y + (r + 1) * cell
+#                   pygame.draw.line(
+#                           self._screen,
+#                           (255, 255, 255),
+#                           (offset_x + c * cell, y),
+#                           (offset_x + (c + 1) * cell, y))
+#               if self._maze.has_wall(r, c, self.WEST):
+#                   pygame.draw.line(
+#                           self._screen,
+#                           (255, 255, 255),
+#                           (offset_x + c * cell, offset_y + r * cell),
+#                           (offset_x + c * cell, offset_y + (r + 1) * cell))
 
     def draw_player(self, player: Player) -> None:
         cell = self.cell_size
@@ -126,57 +218,121 @@ class Renderer:
 
     def update_screen(self, screen: pygame.Surface) -> None:
         self._screen = screen
-        self._cell_width = self._screen.get_width() // self._maze.width
-        self._cell_height = self._screen.get_height() // self._maze.height
-        self.cell_size = min(self._cell_width, self._cell_height)
+        self.fit_maze()
 
+#     def draw_pac_gum(self, pacgums: set[tuple[int, int]]) -> None:
+#         offset_x, offset_y = self.calculate_pos()
+#         cell = self.cell_size
+#         for r, c in pacgums:
+#             x = offset_x + (c + 0.5) * cell
+#             y = offset_y + (r + 0.5) * cell
+#             pygame.draw.circle(
+#                     self._screen,
+#                     (255, 255, 255),
+#                     (x, y),
+#                     (cell // 10))
+# 
+#     def draw_super_pacgum(self,
+#                           pacgums: set[tuple[int, int]]
+#                           ) -> None:
+#         offset_x, offset_y = self.calculate_pos()
+#         cell = self.cell_size
+# 
+#         for r, c in pacgums:
+#             x = offset_x + (c + 0.5) * cell
+#             y = offset_y + (r + 0.5) * cell
+# 
+#             pygame.draw.circle(
+#                     self._screen,
+#                     (255, 105, 180),
+#                     (x, y),
+#                     cell // 5
+#                     )
     def draw_pac_gum(self, pacgums: set[tuple[int, int]]) -> None:
+        """Draw the small yellow dots."""
         offset_x, offset_y = self.calculate_pos()
         cell = self.cell_size
         for r, c in pacgums:
             x = offset_x + (c + 0.5) * cell
             y = offset_y + (r + 0.5) * cell
             pygame.draw.circle(
-                    self._screen,
-                    (255, 255, 255),
-                    (x, y),
-                    (cell // 10))
+                self._screen,
+                (255, 215, 0),
+                (x, y),
+                max(2, cell // 9),
+            )
 
-    def draw_super_pacgum(self,
-                          pacgums: set[tuple[int, int]]
-                          ) -> None:
+    def draw_super_pacgum(
+        self,
+        pacgums: set[tuple[int, int]],
+    ) -> None:
+        """Draw the big pink pellets with a soft glow."""
         offset_x, offset_y = self.calculate_pos()
         cell = self.cell_size
-
+        radius = cell // 4
+        size = radius * 6
+        glow = pygame.Surface((size, size), pygame.SRCALPHA)
+        center = (size // 2, size // 2)
+        pygame.draw.circle(glow, (255, 60, 255, 40), center, radius * 3)
+        pygame.draw.circle(glow, (255, 60, 255, 80), center, radius * 2)
+        pygame.draw.circle(
+            glow, (255, 60, 255, 140), center, int(radius * 1.4)
+        )
         for r, c in pacgums:
             x = offset_x + (c + 0.5) * cell
             y = offset_y + (r + 0.5) * cell
-
+            self._screen.blit(glow, (x - size // 2, y - size // 2))
             pygame.draw.circle(
-                    self._screen,
-                    (255, 105, 180),
-                    (x, y),
-                    cell // 5
-                    )
+                self._screen,
+                (255, 120, 255),
+                (x, y),
+                radius,
+            )
+
+    def draw_panel(self, rect: pygame.Rect, label: str, value: str) -> None:
+        """Draw one HUD panel: a small label and a big value."""
+        glass = pygame.Surface(rect.size, pygame.SRCALPHA)
+        area = glass.get_rect()
+        pygame.draw.rect(glass, (4, 10, 35, 200), area, border_radius=12)
+        pygame.draw.rect(glass, (0, 110, 255, 90), area, 8, border_radius=12)
+        pygame.draw.rect(glass, (60, 190, 255), area, 2, border_radius=12)
+        self._screen.blit(glass, rect.topleft)
+        label_font = self.make_font(rect.height // 4)
+        value_font = self.make_font(rect.height // 2)
+        label_text = label_font.render(label, True, (190, 190, 210))
+        value_text = value_font.render(value, True, (255, 255, 255))
+        x = rect.x + rect.width // 12
+        self._screen.blit(label_text, (x, rect.y + rect.height // 8))
+        self._screen.blit(value_text, (x, rect.y + rect.height // 2 - 6))
 
     def draw_hud(self, score: int, lives: int, level: int) -> None:
-        self.font = pygame.font.Font(None, 30)
-        score_text = self.font.render(
-                f"Score : {score}",
-                True,
-                (255, 255, 255))
-        lives_text = self.font.render(
-                f"Lives : {lives}",
-                True,
-                (255, 255, 255))
-        level_text = self.font.render(
-                f"Level : {level}",
-                True,
-                (255, 255, 255))
-
-        self._screen.blit(score_text, (10, 10))
-        self._screen.blit(lives_text, (200, 10))
-        self._screen.blit(level_text, (350, 10))
+        """Draw the side panels: score and lives left, level right."""
+        width = self._screen.get_width()
+        height = self._screen.get_height()
+        offset_x, offset_y = self.calculate_pos()
+        maze_w = self._maze.width * self.cell_size
+        panel_w = int(width * 0.14)
+        panel_h = int(height * 0.12)
+        gap = int(height * 0.03)
+        margin = int(width * 0.03)
+        left_x = offset_x - panel_w - margin
+        right_x = offset_x + maze_w + margin
+        top_y = offset_y + int(height * 0.04)
+        self.draw_panel(
+            pygame.Rect(left_x, top_y, panel_w, panel_h),
+            "SCORE",
+            str(score),
+        )
+        self.draw_panel(
+            pygame.Rect(left_x, top_y + panel_h + gap, panel_w, panel_h),
+            "LIVES",
+            str(lives),
+        )
+        self.draw_panel(
+            pygame.Rect(right_x, top_y, panel_w, panel_h),
+            "LEVEL",
+            str(level),
+        )
 
 
     def draw_ghost(self, ghost: Ghost) -> None:
@@ -194,16 +350,7 @@ class Renderer:
     def update_maze(self, maze: MazeAdapter) -> None:
         """Update the maze used by the renderer."""
         self._maze = maze
-        self._cell_width = (
-            self._screen.get_width() // maze.width
-        )
-        self._cell_height = (
-            self._screen.get_height() // maze.height
-        )
-        self.cell_size = min(
-            self._cell_width,
-            self._cell_height
-        )
+        self.fit_maze()
 
 
 
@@ -460,78 +607,62 @@ class Renderer:
             self.draw_neon_button(self._screen, rect, name, font, is_hovered)
 
 
-
-
-    def draw_highscores(
-        self,
-        entries: list[dict[str, str | int]],
-    ) -> None:
+    def draw_highscores(self, entries: list[dict[str, str | int]]) -> None:
         """Draw the top 10 highscores screen."""
+        width = self._screen.get_width()
+        height = self._screen.get_height()
 
-        background = pygame.transform.scale(
-            self.all_bg,
-            self._screen.get_size(),
-        )
-        self._screen.blit(background, (0, 0))
+        if self.hs_bg is not None:
+            background = pygame.transform.smoothscale(
+                self.hs_bg, (width, height)
+            )
+            self._screen.blit(background, (0, 0))
 
-        screen_width, screen_height = self._screen.get_size()
+        #title_font = self.make_font(height // 10)
+        line_font = self.make_font(height // 20)
+        hint_font = self.make_font(height // 36)
 
-        title_font = pygame.font.Font(None, 64)
-        entry_font = pygame.font.Font(None, 34)
-        help_font = pygame.font.Font(None, 28)
+        #title = title_font.render("HIGH SCORES", True, (255, 255, 0))
+        #self._screen.blit(
+        #    title,
+        #    title.get_rect(center=(width // 2, height // 8)),
+        #)
 
-        title = title_font.render(
-            "HIGH SCORES",
-            True,
-            (255, 255, 0),
-        )
-        title_rect = title.get_rect(
-            center=(screen_width // 2, 70),
-        )
-        self._screen.blit(title, title_rect)
+
+        panel = pygame.Rect(0, 0, width // 2, int(height * 0.62))
+        panel.center = (width // 2, int(height * 0.44))
+        shade = pygame.Surface(panel.size, pygame.SRCALPHA)
+        shade.fill((0, 0, 0, 140))
+        self._screen.blit(shade, panel.topleft)
 
         if not entries:
-            message = entry_font.render(
-                "No scores yet!",
-                True,
-                (255, 255, 255),
+            empty = line_font.render("NO SCORES YET", True, (255, 255, 255))
+            self._screen.blit(empty, empty.get_rect(center=panel.center))
+
+        row_h = panel.height / 10
+        for i, entry in enumerate(entries[:10]):
+            y = int(panel.top + (i + 0.5) * row_h)
+            rank = line_font.render(f"{i + 1}.", True, (255, 255, 255))
+            name = line_font.render(
+                str(entry["name"]).upper(), True, (255, 255, 255)
             )
-            message_rect = message.get_rect(
-                center=(screen_width // 2, screen_height // 2),
+            score = line_font.render(str(entry["score"]), True, (255, 255, 0))
+            self._screen.blit(
+                rank, rank.get_rect(midleft=(panel.left + 20, y))
             )
-            self._screen.blit(message, message_rect)
+            self._screen.blit(
+                name, name.get_rect(midleft=(panel.left + 90, y))
+            )
+            self._screen.blit(
+                score, score.get_rect(midright=(panel.right - 20, y))
+            )
 
-        else:
-            start_y = 140
-            line_height = 40
-
-            for index, entry in enumerate(entries[:10]):
-                name = str(entry["name"])
-                score = int(entry["score"])
-
-                line = entry_font.render(
-                    f"{index + 1:>2}. {name:<10} {score:>6}",
-                    True,
-                    (255, 255, 255),
-                )
-                line_rect = line.get_rect(
-                    center=(
-                        screen_width // 2,
-                        start_y + index * line_height,
-                    ),
-                )
-                self._screen.blit(line, line_rect)
-
-        help_text = help_font.render(
-            "Press ESC to return to Main Menu",
-            True,
-            (0, 255, 255),
+        hint = hint_font.render(
+            "PRESS ESC OR CLICK TO GO BACK", True, (255, 255, 0)
         )
-        help_rect = help_text.get_rect(
-            center=(
-                screen_width // 2,
-                screen_height - 40,
-            ),
+        self._screen.blit(
+            hint,
+            hint.get_rect(center=(width // 2, height - height // 14)),
         )
-        self._screen.blit(help_text, help_rect)
 
+    
