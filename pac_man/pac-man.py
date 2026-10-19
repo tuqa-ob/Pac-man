@@ -6,7 +6,7 @@ from pm_game.player import Player
 from pm_game.input import change_dir
 from pm_game.render import Renderer
 from pm_game.highscore import Highscore
-from pm_game.menu import get_clicked_button, make_rects
+from pm_game.menu import get_clicked_button, make_rects, make_pause_rects, get_instructions
 
 
 def main() -> None:
@@ -39,6 +39,9 @@ def main() -> None:
     print(renderer.cell_size)
     print(len(game.level.pacgum_positions))
     clock = pygame.time.Clock()
+    time_limit = config.get("level_max_time")
+    instructions = get_instructions(config)
+
     running = True
 
     while running:
@@ -56,23 +59,41 @@ def main() -> None:
                 if choice == "Start Game":
                     game = Game(config)
                     game.load_level()
+                    elapsed_time = 0.0
                     renderer.update_maze(game.maze)
                     state = "playing"
                     print("DEBUG: state changed to playyyy")
                 elif choice == "High Scores":
                     state = "highscores"
                     print("DEBUG: state changed to highscores")
+                elif choice == "Instructions":
+                    state = "instructions"
                 elif choice == "Exit Game":
                     print("DEBUG: state changed to xxxxxxxxxxx")
                     running = False
             
-            elif (event.type == pygame.MOUSEBUTTONDOWN
-                  and state == "highscores"):
+            elif event.type == pygame.MOUSEBUTTONDOWN and state == "playing":
+                if renderer.pause_button_rect().collidepoint(event.pos):
+                    state = "paused"
+
+            elif event.type == pygame.MOUSEBUTTONDOWN and state == "paused":
+                pause_rects = make_pause_rects(
+                    screen.get_width(), screen.get_height()
+                )
+                choice = get_clicked_button(pause_rects, event.pos)
+                if choice == "Resume":
+                    state = "playing"
+                elif choice == "Exit":
+                    game.game_over = True
+                    state = "playing"
+            
+            elif (event.type == pygame.MOUSEBUTTONDOWN and
+                  state in ("highscores", "instructions")):
                 state = "menu"
 
             elif event.type == pygame.KEYDOWN:
 
-                if state == "highscores":
+                if state in ("highscores", "instructions"):
                     if event.key == pygame.K_ESCAPE:
                         state = "menu"
 
@@ -117,26 +138,46 @@ def main() -> None:
         if not game.game_won:
             if game.advance_level_if_cleared():
                 renderer.update_maze(game.maze)
+                elapsed_time = 0.0
 
         screen.fill((4, 8, 28))
+        
+        if state == "playing" and not game.game_over and not game.game_won:
+            elapsed_time += dt
+            if elapsed_time >= time_limit:
+                game.game_over = True
 
         if state == "menu":
             renderer.draw_main_menu(rects, pygame.mouse.get_pos())
+        
         elif state == "highscores":
             renderer.draw_highscores(highscore.top())
+        
+        elif state == "instructions":
+            renderer.draw_instructions(instructions)
+        
         elif game.game_over:
             renderer.draw_game_over(game.score, game.player_name)
+        
         elif game.game_won:
             renderer.draw_victory(game.score, game.player_name)
+
         else:
             renderer.draw_maze()
             renderer.draw_pac_gum(game.level.pacgum_positions)
             renderer.draw_super_pacgum(
                     game.level.super_pacgum_positions)
             renderer.draw_player(game.player)
-            renderer.draw_hud(game.score, game.lives, game.current_level)
+            renderer.draw_pause_button(pygame.mouse.get_pos())
+            renderer.draw_hud(game.score, game.lives, game.current_level, max(0.0, time_limit - elapsed_time))
             for ghost in game.ghosts:
                 renderer.draw_ghost(ghost)
+        
+        if state == "paused":
+            renderer.draw_pause_menu(
+                make_pause_rects(screen.get_width(), screen.get_height()),
+                pygame.mouse.get_pos(),
+            )
 
         pygame.display.flip()
     pygame.quit()

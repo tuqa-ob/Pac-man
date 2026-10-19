@@ -1,5 +1,9 @@
 [
   {
+    "name": "s",
+    "score": 640
+  },
+  {
     "name": "g",
     "score": 370
   },
@@ -10,6 +14,14 @@
   {
     "name": "sahar33",
     "score": 260
+  },
+  {
+    "name": "hhhh",
+    "score": 170
+  },
+  {
+    "name": "f",
+    "score": 110
   },
   {
     "name": "ssss",
@@ -26,17 +38,5 @@
   {
     "name": "sssss",
     "score": 10
-  },
-  {
-    "name": "test",
-    "score": 0
-  },
-  {
-    "name": "fd",
-    "score": 0
-  },
-  {
-    "name": "fd",
-    "score": 0
   }
 ]

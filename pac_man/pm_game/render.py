@@ -3,6 +3,7 @@ from .ghost import Ghost, GhostState
 from pm_game.adapter import MazeAdapter
 from pm_game.player import Player
 from pathlib import Path
+import math
 
 
 class Renderer:
@@ -14,9 +15,7 @@ class Renderer:
     def __init__(self, screen: pygame.Surface, maze: MazeAdapter) -> None:
         self._screen = screen
         self._maze = maze
-        self._cell_width = self._screen.get_width() // self._maze.width
-        self._cell_height = self._screen.get_height() // self._maze.height
-        self.cell_size = min(self._cell_width, self._cell_height)
+        self.fit_maze()
         assets_dir = Path(__file__).resolve().parent.parent / "assets"
         self.ghost_images = {
                 "blue": pygame.image.load(
@@ -65,6 +64,28 @@ class Renderer:
             ).convert()
         except (pygame.error, FileNotFoundError):
             self.maze_bg = None
+        
+        try:
+            self.gameOver = pygame.image.load(
+                str(assets_dir / "gameover.png")
+            ).convert()
+        except (pygame.error, FileNotFoundError):
+            self.gameOver = None
+        
+        try:
+            self.won = pygame.image.load(
+                str(assets_dir / "won.png")
+            ).convert()
+        except (pygame.error, FileNotFoundError):
+            self.won = None
+
+        try:
+            self.instr = pygame.image.load(
+                str(assets_dir / "instr.png")
+            ).convert()
+        except (pygame.error, FileNotFoundError):
+            self.instr = None
+
 
 
     def calculate_pos(self) -> tuple[int, int]:
@@ -84,8 +105,8 @@ class Renderer:
 
     def fit_maze(self) -> None:
         """Choose the cell size so the maze fits between the side panels."""
-        avail_w = int(self._screen.get_width() * 0.5)
-        avail_h = int(self._screen.get_height() * 0.92)
+        avail_w = int(self._screen.get_width() * 0.65)
+        avail_h = int(self._screen.get_height() * 0.85)
         self.cell_size = min(
             avail_w // self._maze.width,
             avail_h // self._maze.height,
@@ -159,48 +180,6 @@ class Renderer:
         )
 
 
-#   def draw_maze(self) -> None:
-#       cell = self.cell_size
-#       offset_x, offset_y = self.calculate_pos()
-#       maze_width = self._maze.width * cell
-#       maze_height = self._maze.height * cell
-#       maze_right = offset_x + maze_width - 1
-#       maze_bottom = offset_y + maze_height - 1
-#       for r in range(self._maze.height):
-#           for c in range(self._maze.width):
-#               if self._maze.has_wall(r, c, self.NORTH):
-#                   pygame.draw.line(
-#                       self._screen,
-#                       (255, 255, 255),
-#                       (offset_x + c * cell, offset_y + r * cell),
-#                       (offset_x + (c + 1 ) * cell, offset_y + r * cell))
-#               if self._maze.has_wall(r, c, self.EAST):
-#                   if c == self._maze.width - 1:
-#                       x = maze_right
-#                   else:
-#                       x = offset_x + (c + 1) * cell
-#                   pygame.draw.line(
-#                           self._screen,
-#                           (255, 255, 255),
-#                           (x, offset_y + r * cell),
-#                           (x, offset_y + (r + 1) * cell))
-#               if self._maze.has_wall(r, c, self.SOUTH):
-#                   if r == self._maze.height - 1:
-#                       y = maze_bottom 
-#                   else:
-#                       y = offset_y + (r + 1) * cell
-#                   pygame.draw.line(
-#                           self._screen,
-#                           (255, 255, 255),
-#                           (offset_x + c * cell, y),
-#                           (offset_x + (c + 1) * cell, y))
-#               if self._maze.has_wall(r, c, self.WEST):
-#                   pygame.draw.line(
-#                           self._screen,
-#                           (255, 255, 255),
-#                           (offset_x + c * cell, offset_y + r * cell),
-#                           (offset_x + c * cell, offset_y + (r + 1) * cell))
-
     def draw_player(self, player: Player) -> None:
         cell = self.cell_size
         offset_x, offset_y = self.calculate_pos()
@@ -220,34 +199,7 @@ class Renderer:
         self._screen = screen
         self.fit_maze()
 
-#     def draw_pac_gum(self, pacgums: set[tuple[int, int]]) -> None:
-#         offset_x, offset_y = self.calculate_pos()
-#         cell = self.cell_size
-#         for r, c in pacgums:
-#             x = offset_x + (c + 0.5) * cell
-#             y = offset_y + (r + 0.5) * cell
-#             pygame.draw.circle(
-#                     self._screen,
-#                     (255, 255, 255),
-#                     (x, y),
-#                     (cell // 10))
-# 
-#     def draw_super_pacgum(self,
-#                           pacgums: set[tuple[int, int]]
-#                           ) -> None:
-#         offset_x, offset_y = self.calculate_pos()
-#         cell = self.cell_size
-# 
-#         for r, c in pacgums:
-#             x = offset_x + (c + 0.5) * cell
-#             y = offset_y + (r + 0.5) * cell
-# 
-#             pygame.draw.circle(
-#                     self._screen,
-#                     (255, 105, 180),
-#                     (x, y),
-#                     cell // 5
-#                     )
+
     def draw_pac_gum(self, pacgums: set[tuple[int, int]]) -> None:
         """Draw the small yellow dots."""
         offset_x, offset_y = self.calculate_pos()
@@ -305,19 +257,25 @@ class Renderer:
         self._screen.blit(label_text, (x, rect.y + rect.height // 8))
         self._screen.blit(value_text, (x, rect.y + rect.height // 2 - 6))
 
-    def draw_hud(self, score: int, lives: int, level: int) -> None:
+    def draw_hud(self, score: int, lives: int, level: int, time_left: float) -> None:
         """Draw the side panels: score and lives left, level right."""
         width = self._screen.get_width()
         height = self._screen.get_height()
         offset_x, offset_y = self.calculate_pos()
         maze_w = self._maze.width * self.cell_size
-        panel_w = int(width * 0.14)
-        panel_h = int(height * 0.12)
+        panel_w = int(width * 0.12)
+        panel_h = int(height * 0.10)
         gap = int(height * 0.03)
         margin = int(width * 0.03)
         left_x = offset_x - panel_w - margin
         right_x = offset_x + maze_w + margin
         top_y = offset_y + int(height * 0.04)
+        
+        total = math.ceil(time_left)
+        minutes = total // 60
+        seconds = total % 60
+        time_text = f"{minutes:02d}:{seconds:02d}"
+
         self.draw_panel(
             pygame.Rect(left_x, top_y, panel_w, panel_h),
             "SCORE",
@@ -329,10 +287,16 @@ class Renderer:
             str(lives),
         )
         self.draw_panel(
+            pygame.Rect(right_x, top_y + panel_h + gap, panel_w, panel_h),
+            "TIME",
+            str(time_text)
+        )
+        self.draw_panel(
             pygame.Rect(right_x, top_y, panel_w, panel_h),
             "LEVEL",
             str(level),
         )
+
 
 
     def draw_ghost(self, ghost: Ghost) -> None:
@@ -357,7 +321,7 @@ class Renderer:
     def draw_game_over(self, score: int, player_name: str = "") -> None:
         """Draw the Game Over screen."""
         background = pygame.transform.scale(
-            self.all_bg,
+            self.gameOver,
             self._screen.get_size(),
         )
         self._screen.blit(background, (0, 0))
@@ -367,7 +331,7 @@ class Renderer:
         input_font = pygame.font.Font(None, 32)
         instruction_font = pygame.font.Font(None, 26)
 
-        message = font.render("GAME OVER", True, (255, 0, 0))
+
         score_text = score_font.render(
             f"Final Score: {score}", True, (255, 255, 255)
         )
@@ -389,10 +353,7 @@ class Renderer:
         center_x = screen_width // 2
         center_y = screen_height // 2
 
-        self._screen.blit(
-            message,
-            message.get_rect(center=(center_x, center_y - 110)),
-        )
+
         self._screen.blit(
             score_text,
             score_text.get_rect(center=(center_x, center_y - 45)),
@@ -427,7 +388,7 @@ class Renderer:
     def draw_victory(self, score: int, player_name: str = "") -> None:
         """Draw the victory screen."""
         background = pygame.transform.scale(
-            self.all_bg,
+            self.won,
             self._screen.get_size(),
         )
         self._screen.blit(background, (0, 0))
@@ -438,7 +399,6 @@ class Renderer:
         input_font = pygame.font.Font(None, 32)
         instruction_font = pygame.font.Font(None, 26)
 
-        message = font.render("YOU WIN!", True, (0, 255, 0))
         score_text = score_font.render(
             f"Final Score: {score}", True, (255, 255, 255)
         )
@@ -457,10 +417,6 @@ class Renderer:
         center_x = screen_width // 2
         center_y = screen_height // 2
 
-        self._screen.blit(
-            message,
-            message.get_rect(center=(center_x, center_y - 110)),
-        )
         self._screen.blit(
             score_text,
             score_text.get_rect(center=(center_x, center_y - 45)),
@@ -490,49 +446,6 @@ class Renderer:
             instruction,
             instruction.get_rect(center=(center_x, center_y + 110)),
         )
-
-
-#     def draw_main_menu(
-#         self,
-#         rects: dict[str, pygame.Rect],
-#         mouse_pos: tuple[int, int],
-#         ) -> None:
-# 
-#         """Draw the main menu: background and pill buttons."""
-#         width = self._screen.get_width()
-#         height = self._screen.get_height()
-# 
-#         if self.menu_bg is not None:
-#             background = pygame.transform.smoothscale(
-#                 self.menu_bg, (width, height)
-#             )
-#             self._screen.blit(background, (0, 0))
-# 
-#         first = next(iter(rects.values()))
-#         button_font = self.make_font(int(first.height * 0.75))
-#         colors = [
-#             (255, 255, 0),
-#             (255, 192, 203),
-#             (0, 0, 255),
-#             (255, 128, 0),
-#         ]
-# 
-#         for (name, rect), color in zip(rects.items(), colors):
-#             hovered = rect.collidepoint(mouse_pos)
-#             radius = rect.height // 2
-#             thickness = max(3, rect.height // 11)
-#             if hovered:
-#                 thickness += 2
-#             glass = pygame.Surface(rect.size, pygame.SRCALPHA)
-#             area = glass.get_rect()
-#             pygame.draw.rect(glass, (0, 0, 0, 90), area, border_radius=radius)
-#             pygame.draw.rect(
-#                 glass, color, area, thickness, border_radius=radius
-#             )
-#             self._screen.blit(glass, rect.topleft)
-#             text_color = color if hovered else (255, 255, 255)
-#             text = button_font.render(name.upper(), True, text_color)
-#             self._screen.blit(text, text.get_rect(center=rect.center))
 
     def draw_neon_button(self, screen: pygame.Surface,
                          rect: pygame.Rect, text: str,
@@ -665,4 +578,136 @@ class Renderer:
             hint.get_rect(center=(width // 2, height - height // 14)),
         )
 
-    
+    def pause_button_rect(self) -> pygame.Rect:
+        """Return the rectangle of the Pause button under the maze."""
+
+        offset_x, offset_y = self.calculate_pos()
+        maze_w = self._maze.width * self.cell_size
+        maze_h = self._maze.height * self.cell_size
+        room = self._screen.get_height() - (offset_y + maze_h)
+        button_h = int(room * 0.4)
+        rect = pygame.Rect(0, 0, int(button_h * 3.5), button_h)
+        rect.midtop = (
+            offset_x + maze_w // 2,
+            offset_y + maze_h + int(room * 0.2),
+        )
+        return rect
+
+    def draw_pause_button(self, mouse_pos: tuple[int, int]) -> None:
+        """Draw the Pause button under the maze."""
+        rect = self.pause_button_rect()
+        font = self.make_font(int(rect.height * 0.7))
+        self.draw_neon_button(
+            self._screen, rect, "PAUSE", font, rect.collidepoint(mouse_pos)
+        )
+
+    def draw_pause_menu(
+        self,
+        rects: dict[str, pygame.Rect],
+        mouse_pos: tuple[int, int],
+    ) -> None:
+        """Dim the game and draw the pause title and its two buttons."""
+        width = self._screen.get_width()
+        height = self._screen.get_height()
+        shade = pygame.Surface((width, height), pygame.SRCALPHA)
+        shade.fill((0, 0, 0, 170))
+        self._screen.blit(shade, (0, 0))
+
+        title_font = self.make_font(height // 8)
+        title = title_font.render("PAUSED", True, (255, 255, 255))
+        self._screen.blit(
+            title,
+            title.get_rect(center=(width // 2, int(height * 0.30))),
+        )
+
+        first = next(iter(rects.values()))
+        font = self.make_font(int(first.height * 0.6))
+        for name, rect in rects.items():
+            self.draw_neon_button(
+                self._screen,
+                rect,
+                name.upper(),
+                font,
+                rect.collidepoint(mouse_pos),
+            )
+    def wrap_text(
+        self,
+        font: pygame.font.Font,
+        text: str,
+        max_width: int,
+    ) -> list[str]:
+        """Cut a text into lines that are not wider than max_width."""
+        lines: list[str] = []
+        current = ""
+        for word in text.split():
+            trial = f"{current} {word}".strip()
+            if not current or font.size(trial)[0] <= max_width:
+                current = trial
+            else:
+                lines.append(current)
+                current = word
+        if current:
+            lines.append(current)
+        return lines
+
+    def draw_instructions(
+        self,
+        sections: list[tuple[str, list[str]]],
+    ) -> None:
+        """Draw the instructions screen: controls and rules."""
+        width = self._screen.get_width()
+        height = self._screen.get_height()
+
+        background = pygame.transform.scale(
+            self.instr,
+            (width, height),
+        )
+        self._screen.blit(background, (0, 0))
+
+        title_font = self.make_font(height // 10)
+        head_font = self.make_font(height // 22)
+        text_font = self.make_font(height // 30)
+        hint_font = self.make_font(height // 36)
+
+        title = title_font.render("INSTRUCTIONS", True, (255, 255, 0))
+        self._screen.blit(
+            title,
+            title.get_rect(center=(width // 2, int(height * 0.09))),
+        )
+
+        panel = pygame.Rect(0, 0, int(width * 0.7), int(height * 0.72))
+        panel.center = (width // 2, int(height * 0.53))
+        shade = pygame.Surface(panel.size, pygame.SRCALPHA)
+        shade.fill((0, 0, 0, 150))
+        self._screen.blit(shade, panel.topleft)
+
+        margin = panel.width // 18
+        x = panel.left + margin
+        max_width = panel.width - 2 * margin
+        indent = text_font.size("- ")[0]
+        y = panel.top + panel.height // 25
+
+        for heading, lines in sections:
+            head = head_font.render(heading, True, (255, 255, 0))
+            self._screen.blit(head, (x, y))
+            y += head.get_height() + 4
+            for line in lines:
+                parts = self.wrap_text(text_font, line, max_width - indent)
+                for i, part in enumerate(parts):
+                    prefix = "- " if i == 0 else ""
+                    text = text_font.render(
+                        prefix + part, True, (255, 255, 255)
+                    )
+                    pos_x = x if i == 0 else x + indent
+                    self._screen.blit(text, (pos_x, y))
+                    y += text.get_height() + 2
+                y += 5
+            y += 12
+
+        hint = hint_font.render(
+            "PRESS ESC OR CLICK TO GO BACK", True, (255, 255, 0)
+        )
+        self._screen.blit(
+            hint,
+            hint.get_rect(center=(width // 2, height - height // 14)),
+        )
