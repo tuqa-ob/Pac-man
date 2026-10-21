@@ -316,6 +316,15 @@ class Renderer:
         self._maze = maze
         self.fit_maze()
 
+    def draw_input_box(self, rect: pygame.Rect) -> None:
+        """Draw a neon glass box for typing text."""
+        glass = pygame.Surface(rect.size, pygame.SRCALPHA)
+        area = glass.get_rect()
+        pygame.draw.rect(glass, (4, 10, 35, 210), area, border_radius=10)
+        pygame.draw.rect(glass, (0, 110, 255, 90), area, 8, border_radius=10)
+        pygame.draw.rect(glass, (60, 190, 255), area, 2, border_radius=10)
+        self._screen.blit(glass, rect.topleft)
+ 
 
 
     def draw_game_over(self, score: int, player_name: str = "") -> None:
@@ -366,13 +375,7 @@ class Renderer:
         input_rect = pygame.Rect(
             center_x - 150, center_y + 35, 300, 45
         )
-        pygame.draw.rect(
-            self._screen, (60, 60, 80), input_rect, border_radius=5
-        )
-        pygame.draw.rect(
-            self._screen, (255, 255, 0), input_rect, 2,
-            border_radius=5,
-        )
+        self.draw_input_box(input_rect)
         self._screen.blit(
             name_text,
             name_text.get_rect(
@@ -429,13 +432,7 @@ class Renderer:
         input_rect = pygame.Rect(
             center_x - 150, center_y + 35, 300, 45
         )
-        pygame.draw.rect(
-            self._screen, (60, 60, 80), input_rect, border_radius=5
-        )
-        pygame.draw.rect(
-            self._screen, (255, 255, 0), input_rect, 2,
-            border_radius=5,
-        )
+        self.draw_input_box(input_rect)
         self._screen.blit(
             name_text,
             name_text.get_rect(
