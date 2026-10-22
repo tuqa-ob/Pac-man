@@ -17,23 +17,28 @@ class Renderer:
         self._maze = maze
         self.fit_maze()
         assets_dir = Path(__file__).resolve().parent.parent / "assets"
-        self.ghost_images = {
-                "blue": pygame.image.load(
-                    str(assets_dir / "blue.png")
-                    ).convert_alpha(),
-                "orange": pygame.image.load(
-                    str(assets_dir / "orange.png")
-                    ).convert_alpha(),
-                "pink": pygame.image.load(
-                    str(assets_dir / "pink.png")
-                    ).convert_alpha(),
-                "red": pygame.image.load(
-                    str(assets_dir / "red.png")
-                    ).convert_alpha(),
-                "eaten": pygame.image.load(
-                    str(assets_dir / "eaten.png")
-                    ).convert_alpha()
-                }
+        try:
+            self.ghost_images = {
+                    "blue": pygame.image.load(
+                        str(assets_dir / "blue.png")
+                        ).convert_alpha(),
+                    "orange": pygame.image.load(
+                        str(assets_dir / "orange.png")
+                        ).convert_alpha(),
+                    "pink": pygame.image.load(
+                        str(assets_dir / "pink.png")
+                        ).convert_alpha(),
+                    "red": pygame.image.load(
+                        str(assets_dir / "red.png")
+                        ).convert_alpha(),
+                    "eaten": pygame.image.load(
+                        str(assets_dir / "eaten.png")
+                        ).convert_alpha()
+                    }
+        except (pygame.error, FileNotFoundError):
+            print("Warning: Could not load ghost images.")
+            self.ghost_images = {}
+
         self.all_bg = pygame.image.load(
                     str(assets_dir / "bg.png")
                     ).convert_alpha()
