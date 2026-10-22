@@ -661,6 +661,10 @@ class Renderer:
         )
         self._screen.blit(background, (0, 0))
 
+        dim = pygame.Surface((width, height), pygame.SRCALPHA)
+        dim.fill((0, 0, 0, 90))
+        self._screen.blit(dim, (0, 0))
+
         title_font = self.make_font(height // 10)
         head_font = self.make_font(height // 22)
         text_font = self.make_font(height // 30)
@@ -674,9 +678,7 @@ class Renderer:
 
         panel = pygame.Rect(0, 0, int(width * 0.7), int(height * 0.72))
         panel.center = (width // 2, int(height * 0.53))
-        shade = pygame.Surface(panel.size, pygame.SRCALPHA)
-        shade.fill((0, 0, 0, 150))
-        self._screen.blit(shade, panel.topleft)
+        self.draw_input_box(panel)
 
         margin = panel.width // 18
         x = panel.left + margin

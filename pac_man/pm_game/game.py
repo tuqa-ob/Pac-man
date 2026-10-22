@@ -19,6 +19,9 @@ class Game:
         self.game_over = False
         self.player_name = ""
         self.entering_name = False
+        self.invincible = False
+        self.ghosts_frozen = False
+        self.speed_boost = False
 
 
     def load_level(self) -> None:
@@ -92,6 +95,8 @@ class Game:
                 and ghost.current_col == self.player.curr_col
             ):
                 if ghost.state == GhostState.CHASE:
+                    if self.invincible:
+                        continue
                     self.lives -= 1
 
                     if self.lives <= 0:
@@ -128,3 +133,11 @@ class Game:
         self.current_level += 1
         self.load_level()
         return True
+
+
+    def skip_level(self) -> None:
+        """Skip the current level."""
+        self.level.pacgum_positions.clear()
+        self.level.super_pacgum_positions.clear()
+        self.advance_level_if_cleared()
+

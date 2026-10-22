@@ -1,7 +1,7 @@
 NAME = pac-man.py
 VENV = .venv
 
-.PHONY: all install run debug lint clean venv shell venv-run
+.PHONY: all install run debug lint clean venv shell
 
 all: install
 

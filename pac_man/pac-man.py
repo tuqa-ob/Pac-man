@@ -115,24 +115,37 @@ def main() -> None:
                         game.player_name += event.unicode
 
                 elif state == "playing" and not game.game_over and not game.game_won:
-                    if change_dir(game.player, event.key):
+                    if event.key == pygame.K_l:
+                        game.skip_level()
+                        renderer.update_maze(game.maze)
+                    elif event.key == pygame.K_e:
+                        game.lives += 1
+                    elif event.key == pygame.K_i:
+                        game.invincible = not game.invincible
+                    elif event.key == pygame.K_f:
+                        game.ghosts_frozen = not game.ghosts_frozen
+                    elif event.key == pygame.K_s:
+                        game.speed_boost = not game.speed_boost
+                        print(f"Speed Boost: {'ON' if game.speed_boost else 'OFF'}")
+                    elif change_dir(game.player, event.key):
                         game.move_player()
+                        if game.speed_boost:
+                            game.move_player()
 
-                        print(game.player.curr_row, game.player.curr_col)
-                        print(game.score)
-                        print(game.lives)
+
 
         if game.game_over or game.game_won:
             game.entering_name = True
 
         if state == "playing" and not game.game_over and not game.game_won:
-            for ghost in game.ghosts:
-                ghost.update(
-                        dt,
-                        game.level,
-                        game.player.curr_row,
-                        game.player.curr_col
-                        )
+            if not game.ghosts_frozen:
+                for ghost in game.ghosts:
+                    ghost.update(
+                            dt,
+                            game.level,
+                            game.player.curr_row,
+                            game.player.curr_col
+                            )
             game.check_collisions()
 
         if not game.game_won:
