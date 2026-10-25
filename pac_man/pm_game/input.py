@@ -2,6 +2,7 @@ import pygame
 from .player import Player
 from .direction import Direction
 
+
 def change_dir(player: Player, key: int) -> bool:
     move_player = False
     if key == pygame.K_UP or key == pygame.K_w:
@@ -17,4 +18,3 @@ def change_dir(player: Player, key: int) -> bool:
         player.dir = Direction.LEFT
         move_player = True
     return move_player
-

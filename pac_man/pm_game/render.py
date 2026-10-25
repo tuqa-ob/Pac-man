@@ -7,93 +7,56 @@ import math
 
 
 class Renderer:
+    """Draw every screen of the game with pygame."""
     NORTH = 1
     EAST = 2
     SOUTH = 4
     WEST = 8
-    
+
     def __init__(self, screen: pygame.Surface, maze: MazeAdapter) -> None:
+        """Create the renderer and load every picture and the font.
+
+        Args:
+            screen: the window surface to draw on.
+            maze: the maze of the current level.
+        """
         self._screen = screen
         self._maze = maze
         self.fit_maze()
         assets_dir = Path(__file__).resolve().parent.parent / "assets"
-        try:
-            self.ghost_images = {
-                    "blue": pygame.image.load(
-                        str(assets_dir / "blue.png")
-                        ).convert_alpha(),
-                    "orange": pygame.image.load(
-                        str(assets_dir / "orange.png")
-                        ).convert_alpha(),
-                    "pink": pygame.image.load(
-                        str(assets_dir / "pink.png")
-                        ).convert_alpha(),
-                    "red": pygame.image.load(
-                        str(assets_dir / "red.png")
-                        ).convert_alpha(),
-                    "eaten": pygame.image.load(
-                        str(assets_dir / "eaten.png")
-                        ).convert_alpha()
-                    }
-        except (pygame.error, FileNotFoundError):
-            print("Warning: Could not load ghost images.")
-            self.ghost_images = {}
-
-        self.all_bg = pygame.image.load(
-                    str(assets_dir / "bg.png")
-                    ).convert_alpha()
-
+        self.ghost_images = {
+            name: self.load_image(assets_dir / f"{name}.png")
+            for name in ("blue", "orange", "pink", "red", "eaten")
+        }
+        self.all_bg = self.load_image(assets_dir / "bg.png")
         self.font_path = str(assets_dir / "BebasNeue-Regular.ttf")
-        self.pacman_image = pygame.image.load(
-                str(assets_dir /"pac-man.png")
-                ).convert_alpha()
+        self.pacman_image = self.load_image(assets_dir / "pac-man.png")
+        self.menu_bg = self.load_image(assets_dir / "menu.png", False)
+        self.hs_bg = self.load_image(assets_dir / "HS.png", False)
+        self.maze_bg = self.load_image(assets_dir / "maze.png", False)
+        self.gameOver = self.load_image(assets_dir / "gameover.png", False)
+        self.won = self.load_image(assets_dir / "won.png", False)
+        self.instr = self.load_image(assets_dir / "instr.png", False)
 
+    def load_image(self, path: Path, alpha: bool = True) -> pygame.Surface:
+        """Load a picture, or return a blank one if it cannot be read.
 
+        Args:
+            path: the picture file.
+            alpha: True to keep the transparency of the picture.
+
+        Returns:
+            The picture, or a 1x1 transparent surface if loading fails.
+        """
         try:
-            self.menu_bg = pygame.image.load(
-                str(assets_dir / "menu.png")
-            ).convert()
+            image = pygame.image.load(str(path))
+            return image.convert_alpha() if alpha else image.convert()
         except (pygame.error, FileNotFoundError):
-            self.menu_bg = None
-
-        try:
-            self.hs_bg = pygame.image.load(
-                str(assets_dir / "HS.png")
-            ).convert()
-        except (pygame.error, FileNotFoundError):
-            self.hs_bg = None
-
-        try:
-            self.maze_bg = pygame.image.load(
-                str(assets_dir / "maze.png")
-            ).convert()
-        except (pygame.error, FileNotFoundError):
-            self.maze_bg = None
-        
-        try:
-            self.gameOver = pygame.image.load(
-                str(assets_dir / "gameover.png")
-            ).convert()
-        except (pygame.error, FileNotFoundError):
-            self.gameOver = None
-        
-        try:
-            self.won = pygame.image.load(
-                str(assets_dir / "won.png")
-            ).convert()
-        except (pygame.error, FileNotFoundError):
-            self.won = None
-
-        try:
-            self.instr = pygame.image.load(
-                str(assets_dir / "instr.png")
-            ).convert()
-        except (pygame.error, FileNotFoundError):
-            self.instr = None
-
-
+            print(f"[Warning] Could not load image '{path.name}'.")
+            return pygame.Surface((1, 1), pygame.SRCALPHA)
 
     def calculate_pos(self) -> tuple[int, int]:
+        """Return the top-left corner that centers the maze in the window."""
         cell = self.cell_size
         maze_width = self._maze.width * cell
         maze_height = self._maze.height * cell
@@ -117,7 +80,6 @@ class Renderer:
             avail_h // self._maze.height,
         )
         self.build_maze_surface()
-
 
     def maze_segments(self) -> list[tuple[tuple[int, int], tuple[int, int]]]:
         """List every wall as two points, relative to the maze corner."""
@@ -184,8 +146,12 @@ class Renderer:
             (offset_x - self.maze_pad, offset_y - self.maze_pad),
         )
 
-
     def draw_player(self, player: Player) -> None:
+        """Draw Pac-Man on its cell.
+
+        Args:
+            player: the player to draw.
+        """
         cell = self.cell_size
         offset_x, offset_y = self.calculate_pos()
         x = offset_x + (player.curr_col + 0.5) * cell
@@ -201,9 +167,13 @@ class Renderer:
         self._screen.blit(image, image_rect)
 
     def update_screen(self, screen: pygame.Surface) -> None:
+        """Use the new window surface after a resize.
+
+        Args:
+            screen: the new window surface.
+        """
         self._screen = screen
         self.fit_maze()
-
 
     def draw_pac_gum(self, pacgums: set[tuple[int, int]]) -> None:
         """Draw the small yellow dots."""
@@ -262,7 +232,13 @@ class Renderer:
         self._screen.blit(label_text, (x, rect.y + rect.height // 8))
         self._screen.blit(value_text, (x, rect.y + rect.height // 2 - 6))
 
-    def draw_hud(self, score: int, lives: int, level: int, time_left: float) -> None:
+    def draw_hud(
+        self,
+        score: int,
+        lives: int,
+        level: int,
+        time_left: float,
+    ) -> None:
         """Draw the side panels: score and lives left, level right."""
         width = self._screen.get_width()
         height = self._screen.get_height()
@@ -275,7 +251,7 @@ class Renderer:
         left_x = offset_x - panel_w - margin
         right_x = offset_x + maze_w + margin
         top_y = offset_y + int(height * 0.04)
-        
+
         total = math.ceil(time_left)
         minutes = total // 60
         seconds = total % 60
@@ -302,9 +278,12 @@ class Renderer:
             str(level),
         )
 
-
-
     def draw_ghost(self, ghost: Ghost) -> None:
+        """Draw one ghost, with the picture that matches its state.
+
+        Args:
+            ghost: the ghost to draw.
+        """
         cell = self.cell_size
         offset_x, offset_y = self.calculate_pos()
         x = offset_x + ghost.current_col * cell
@@ -321,6 +300,24 @@ class Renderer:
         self._maze = maze
         self.fit_maze()
 
+    def draw_cheat_help(self, lines: list[str]) -> None:
+        """Draw the cheat mode box: its keys and their state.
+
+        Args:
+            lines: the lines to show; the first one is the title.
+        """
+        height = self._screen.get_height()
+        font = self.make_font(max(14, height // 34))
+        line_h = font.get_height() + 2
+        box_w = max(font.size(line)[0] for line in lines) + 30
+        box_h = line_h * len(lines) + 20
+        rect = pygame.Rect(15, height - box_h - 15, box_w, box_h)
+        self.draw_input_box(rect)
+        for i, line in enumerate(lines):
+            color = (255, 255, 0) if i == 0 else (255, 255, 255)
+            text = font.render(line, True, color)
+            self._screen.blit(text, (rect.x + 15, rect.y + 10 + i * line_h))
+
     def draw_input_box(self, rect: pygame.Rect) -> None:
         """Draw a neon glass box for typing text."""
         glass = pygame.Surface(rect.size, pygame.SRCALPHA)
@@ -329,8 +326,6 @@ class Renderer:
         pygame.draw.rect(glass, (0, 110, 255, 90), area, 8, border_radius=10)
         pygame.draw.rect(glass, (60, 190, 255), area, 2, border_radius=10)
         self._screen.blit(glass, rect.topleft)
- 
-
 
     def draw_game_over(self, score: int, player_name: str = "") -> None:
         """Draw the Game Over screen."""
@@ -340,11 +335,9 @@ class Renderer:
         )
         self._screen.blit(background, (0, 0))
 
-        font = pygame.font.Font(None, 64)
         score_font = pygame.font.Font(None, 36)
         input_font = pygame.font.Font(None, 32)
         instruction_font = pygame.font.Font(None, 26)
-
 
         score_text = score_font.render(
             f"Final Score: {score}", True, (255, 255, 255)
@@ -366,7 +359,6 @@ class Renderer:
 
         center_x = screen_width // 2
         center_y = screen_height // 2
-
 
         self._screen.blit(
             score_text,
@@ -392,7 +384,6 @@ class Renderer:
             instruction.get_rect(center=(center_x, center_y + 110)),
         )
 
-
     def draw_victory(self, score: int, player_name: str = "") -> None:
         """Draw the victory screen."""
         background = pygame.transform.scale(
@@ -401,8 +392,6 @@ class Renderer:
         )
         self._screen.blit(background, (0, 0))
 
-
-        font = pygame.font.Font(None, 64)
         score_font = pygame.font.Font(None, 36)
         input_font = pygame.font.Font(None, 32)
         instruction_font = pygame.font.Font(None, 26)
@@ -449,9 +438,14 @@ class Renderer:
             instruction.get_rect(center=(center_x, center_y + 110)),
         )
 
-    def draw_neon_button(self, screen: pygame.Surface,
-                         rect: pygame.Rect, text: str,
-                         font: pygame.font.Font, is_hovered: bool = False) -> None:
+    def draw_neon_button(
+        self,
+        screen: pygame.Surface,
+        rect: pygame.Rect,
+        text: str,
+        font: pygame.font.Font,
+        is_hovered: bool = False,
+    ) -> None:
         """Draws a futuristic neon button with dual cyan/yellow borders."""
         button_surface = pygame.Surface(
             rect.size, pygame.SRCALPHA
@@ -468,13 +462,9 @@ class Renderer:
             )
             outer_color = (0, 255, 255)
             inner_color = (255, 255, 0)
-            text_color = (255, 255, 0)
-            border_width = 4
         else:
             outer_color = (0, 160, 180)
             inner_color = (200, 150, 0)
-            text_color = (255, 255, 255)
-            border_width = 2
 
         pygame.draw.rect(
             button_surface,
@@ -502,25 +492,30 @@ class Renderer:
 
         screen.blit(button_surface, rect.topleft)
 
+    def draw_main_menu(
+        self,
+        rects: dict[str, pygame.Rect],
+        mouse_pos: tuple[int, int],
+    ) -> None:
+        """Draw the main menu: background and neon buttons.
 
-    def draw_main_menu(self, rects: dict[str, pygame.Rect], mouse_pos: tuple[int, int]) -> None:
- 
+        Args:
+            rects: one rectangle per button name.
+            mouse_pos: the mouse position, used for the hover effect.
+        """
         width = self._screen.get_width()
         height = self._screen.get_height()
         if self.menu_bg is not None:
-             background = pygame.transform.smoothscale(
-                 self.menu_bg, (width, height)
-             )
-             self._screen.blit(background, (0, 0))
-
-
+            background = pygame.transform.smoothscale(
+                self.menu_bg, (width, height)
+            )
+            self._screen.blit(background, (0, 0))
 
         font = pygame.font.SysFont("Arial", 22, bold=True)
 
         for name, rect in rects.items():
             is_hovered = rect.collidepoint(mouse_pos)
             self.draw_neon_button(self._screen, rect, name, font, is_hovered)
-
 
     def draw_highscores(self, entries: list[dict[str, str | int]]) -> None:
         """Draw the top 10 highscores screen."""
@@ -533,16 +528,15 @@ class Renderer:
             )
             self._screen.blit(background, (0, 0))
 
-        #title_font = self.make_font(height // 10)
+        # title_font = self.make_font(height // 10)
         line_font = self.make_font(height // 20)
         hint_font = self.make_font(height // 36)
 
-        #title = title_font.render("HIGH SCORES", True, (255, 255, 0))
-        #self._screen.blit(
+        # title = title_font.render("HIGH SCORES", True, (255, 255, 0))
+        # self._screen.blit(
         #    title,
         #    title.get_rect(center=(width // 2, height // 8)),
-        #)
-
+        # )
 
         panel = pygame.Rect(0, 0, width // 2, int(height * 0.62))
         panel.center = (width // 2, int(height * 0.44))
@@ -632,6 +626,7 @@ class Renderer:
                 font,
                 rect.collidepoint(mouse_pos),
             )
+
     def wrap_text(
         self,
         font: pygame.font.Font,

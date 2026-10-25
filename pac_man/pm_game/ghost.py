@@ -135,6 +135,7 @@ class Ghost:
         self.eaten_timer = self.eaten_duration
 
     def reset_position(self) -> None:
+        """Send the ghost back to its home corner in chase mode."""
         self.current_row = self.home_row
         self.current_col = self.home_col
         self.state = GhostState.CHASE
@@ -211,7 +212,8 @@ class Ghost:
         best_distance = -1
 
         for direction in Direction:
-            if not level.can_move(self.current_row, self.current_col, direction):
+            if not level.can_move(
+                    self.current_row, self.current_col, direction):
                 continue
             drow, dcol = direction.value
             nrow, ncol = self.current_row + drow, self.current_col + dcol

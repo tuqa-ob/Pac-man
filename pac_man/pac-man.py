@@ -2,11 +2,15 @@ import sys
 import pygame
 from pm_game.config import Config
 from pm_game.game import Game
-from pm_game.player import Player
 from pm_game.input import change_dir
 from pm_game.render import Renderer
 from pm_game.highscore import Highscore
-from pm_game.menu import get_clicked_button, make_rects, make_pause_rects, get_instructions
+from pm_game.menu import (
+    get_clicked_button,
+    get_instructions,
+    make_pause_rects,
+    make_rects,
+)
 
 
 def main() -> None:
@@ -23,23 +27,21 @@ def main() -> None:
     lives = config.get("lives")
     seed = config.get("seed")
     highscore = Highscore(file_name)
-    
+
     print("Game Settings Loaded Successfully:")
     print(f" - Initial Lives: {lives}")
     print(f" - Maze Seed: {seed}")
-    print(game.player.curr_row, game.player.curr_col)
-    
+
     pygame.init()
     screen = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
-    
+
     renderer = Renderer(screen, game.maze)
     rects = make_rects(screen.get_width(), screen.get_height())
     state = "menu"
 
-    print(renderer.cell_size)
-    print(len(game.level.pacgum_positions))
     clock = pygame.time.Clock()
     time_limit = config.get("level_max_time")
+    elapsed_time = 0.0
     instructions = get_instructions(config)
 
     running = True
@@ -50,7 +52,9 @@ def main() -> None:
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.VIDEORESIZE:
-                screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
+                screen = pygame.display.set_mode(
+                    (event.w, event.h), pygame.RESIZABLE
+                )
                 renderer.update_screen(screen)
                 rects = make_rects(event.w, event.h)
 
@@ -62,16 +66,13 @@ def main() -> None:
                     elapsed_time = 0.0
                     renderer.update_maze(game.maze)
                     state = "playing"
-                    print("DEBUG: state changed to playyyy")
                 elif choice == "High Scores":
                     state = "highscores"
-                    print("DEBUG: state changed to highscores")
                 elif choice == "Instructions":
                     state = "instructions"
                 elif choice == "Exit Game":
-                    print("DEBUG: state changed to xxxxxxxxxxx")
                     running = False
-            
+
             elif event.type == pygame.MOUSEBUTTONDOWN and state == "playing":
                 if renderer.pause_button_rect().collidepoint(event.pos):
                     state = "paused"
@@ -86,7 +87,7 @@ def main() -> None:
                 elif choice == "Exit":
                     game.game_over = True
                     state = "playing"
-            
+
             elif (event.type == pygame.MOUSEBUTTONDOWN and
                   state in ("highscores", "instructions")):
                 state = "menu"
@@ -114,27 +115,29 @@ def main() -> None:
                           ):
                         game.player_name += event.unicode
 
-                elif state == "playing" and not game.game_over and not game.game_won:
-                    if event.key == pygame.K_l:
+                elif (state == "playing"
+                      and not game.game_over
+                      and not game.game_won):
+                    if event.key == pygame.K_c:
+                        game.toggle_cheat_mode()
+                    elif game.cheat_mode and event.key == pygame.K_l:
                         game.skip_level()
                         renderer.update_maze(game.maze)
-                    elif event.key == pygame.K_e:
+                        elapsed_time = 0.0
+                    elif game.cheat_mode and event.key == pygame.K_e:
                         game.lives += 1
-                    elif event.key == pygame.K_i:
+                    elif game.cheat_mode and event.key == pygame.K_i:
                         game.invincible = not game.invincible
-                    elif event.key == pygame.K_f:
+                    elif game.cheat_mode and event.key == pygame.K_f:
                         game.ghosts_frozen = not game.ghosts_frozen
-                    elif event.key == pygame.K_s:
+                    elif game.cheat_mode and event.key == pygame.K_b:
                         game.speed_boost = not game.speed_boost
-                        print(f"Speed Boost: {'ON' if game.speed_boost else 'OFF'}")
                     elif change_dir(game.player, event.key):
                         game.move_player()
                         if game.speed_boost:
                             game.move_player()
 
-
-
-        if game.game_over or game.game_won:
+        if state == "playing" and (game.game_over or game.game_won):
             game.entering_name = True
 
         if state == "playing" and not game.game_over and not game.game_won:
@@ -154,7 +157,7 @@ def main() -> None:
                 elapsed_time = 0.0
 
         screen.fill((4, 8, 28))
-        
+
         if state == "playing" and not game.game_over and not game.game_won:
             elapsed_time += dt
             if elapsed_time >= time_limit:
@@ -162,16 +165,16 @@ def main() -> None:
 
         if state == "menu":
             renderer.draw_main_menu(rects, pygame.mouse.get_pos())
-        
+
         elif state == "highscores":
             renderer.draw_highscores(highscore.top())
-        
+
         elif state == "instructions":
             renderer.draw_instructions(instructions)
-        
+
         elif game.game_over:
             renderer.draw_game_over(game.score, game.player_name)
-        
+
         elif game.game_won:
             renderer.draw_victory(game.score, game.player_name)
 
@@ -182,10 +185,17 @@ def main() -> None:
                     game.level.super_pacgum_positions)
             renderer.draw_player(game.player)
             renderer.draw_pause_button(pygame.mouse.get_pos())
-            renderer.draw_hud(game.score, game.lives, game.current_level, max(0.0, time_limit - elapsed_time))
+            renderer.draw_hud(
+                game.score,
+                game.lives,
+                game.current_level,
+                max(0.0, time_limit - elapsed_time),
+            )
+            if game.cheat_mode:
+                renderer.draw_cheat_help(game.cheat_lines())
             for ghost in game.ghosts:
                 renderer.draw_ghost(ghost)
-        
+
         if state == "paused":
             renderer.draw_pause_menu(
                 make_pause_rects(screen.get_width(), screen.get_height()),
@@ -194,6 +204,7 @@ def main() -> None:
 
         pygame.display.flip()
     pygame.quit()
+
 
 if __name__ == "__main__":
     main()

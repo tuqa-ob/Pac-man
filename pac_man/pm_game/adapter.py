@@ -1,5 +1,6 @@
 from mazegenerator import MazeGenerator
 
+
 class MazeAdapter:
     """Adapt the external maze generator for the Pac-Man game."""
 
@@ -17,7 +18,7 @@ class MazeAdapter:
 
     def generate(self) -> None:
         """Generate a new maze."""
-        
+
         try:
             generator = MazeGenerator(
                     size=(self.width, self.height),
@@ -41,4 +42,3 @@ class MazeAdapter:
 
         cell = self._maze[row][column]
         return bool(cell & direction)
-

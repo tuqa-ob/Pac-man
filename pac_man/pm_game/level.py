@@ -10,6 +10,7 @@ DIRECTION_TO_WALL = {
     Direction.LEFT: MazeAdapter.WEST,
 }
 
+
 def get_corners(width: int, height: int) -> list[tuple[int, int]]:
     """Return the 4 corner coordinates of a width x height grid.
 
@@ -91,7 +92,7 @@ class Level:
         self.super_pacgum_positions = set(
             get_super_pacgum_positions(width, height)
         )
-        self.pacgum_positions = set()
+        self.pacgum_positions: set[tuple[int, int]] = set()
 
     def get_pacgum_cells(
             self,
@@ -99,7 +100,13 @@ class Level:
             player_col: int,
             pac_gum_num: int
             ) -> None:
+        """Choose at random the cells that will hold a pacgum.
 
+        Args:
+            player_row: row of the player, which never holds a pacgum.
+            player_col: column of the player.
+            pac_gum_num: how many pacgums to place at most.
+        """
         candidates = []
         for row in range(self.height):
             for col in range(self.width):
@@ -139,7 +146,7 @@ class Level:
             self.super_pacgum_positions.remove((row, col))
             return True
         return False
-    
+
     def is_cleared(self) -> bool:
         """Return True when every pacgum and super-pacgum has been eaten."""
         return not self.pacgum_positions and not self.super_pacgum_positions

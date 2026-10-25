@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+
 class Highscore:
     """Load, validate, and persist the top 10 Pac-Man highscores."""
 
@@ -17,15 +18,13 @@ class Highscore:
         self.entries: list[dict[str, str | int]] = []
         self.load()
 
-
     def load(self) -> None:
-
         """Read scores from disk. On any problem, start with an empty list."""
-        
+
         self.entries = []
 
         try:
-            with open (self.file_path, "r") as f:
+            with open(self.file_path, "r") as f:
                 data = json.load(f)
         except FileNotFoundError:
             return
@@ -45,11 +44,13 @@ class Highscore:
 
         valid_entries = []
         for entry in data:
-            if (isinstance(entry, dict)
+            if (
+                isinstance(entry, dict)
                 and isinstance(entry.get("name"), str)
                 and isinstance(entry.get("score"), int)
                 and not isinstance(entry.get("score"), bool)
-                and entry["score"] >= 0):
+                and entry["score"] >= 0
+            ):
 
                 valid_entries.append({
                     "name": entry["name"][:self.MAX_NAME_LENGTH],
@@ -60,7 +61,6 @@ class Highscore:
 
         self.entries = valid_entries
 
-
     def save(self) -> None:
         """Write the current entries back to disk."""
 
@@ -70,11 +70,10 @@ class Highscore:
                 exist_ok=True,
             )
 
-            with open (self.file_path, "w") as f:
+            with open(self.file_path, "w") as f:
                 json.dump(self.entries, f, indent=2)
         except OSError as e:
             print(f"[Warning] Could not save highscores file: {e}")
-
 
     def _clean_name(self, name: str) -> str:
         """Keep only letters, digits and spaces, max MAX_NAME_LENGTH chars."""
@@ -82,7 +81,6 @@ class Highscore:
         cleaned = "".join(c for c in name if c.isalnum() or c == " ")
         cleaned = cleaned.strip()
         return cleaned[:self.MAX_NAME_LENGTH] or "Player"
-
 
     def add_score(self, name: str, score: int) -> None:
         """Add a new entry, keeping only the top MAX_ENTRIES scores.
@@ -101,7 +99,6 @@ class Highscore:
         self.entries.sort(key=lambda e: e["score"], reverse=True)
         self.entries = self.entries[:self.MAX_ENTRIES]
         self.save()
-
 
     def top(self) -> list[dict[str, str | int]]:
         """Return all highscore entries, already sorted, highest first."""

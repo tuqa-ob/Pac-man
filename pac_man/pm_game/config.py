@@ -2,8 +2,16 @@ import json
 from typing import Any, Dict
 from copy import deepcopy
 
+
 class Config:
+    """Game settings read from a JSON file, with safe defaults."""
+
     def __init__(self, file_path: str = "") -> None:
+        """Create the settings and load a file if a path is given.
+
+        Args:
+            file_path: path of the JSON config file (optional).
+        """
         self.default_values: Dict[str, Any] = {
             "highscore_filename": "highscores.json",
             "lives": 3,
@@ -33,6 +41,14 @@ class Config:
             self.load(file_path)
 
     def load(self, file_path: str) -> None:
+        """Read a config file and keep its valid values.
+
+        Problems never stop the game: the defaults are used and a
+        warning is printed.
+
+        Args:
+            file_path: path of the JSON config file.
+        """
         try:
             text = self._read_file(file_path)
             new_values = json.loads(text)
@@ -68,13 +84,23 @@ class Config:
         self._validate(new_values)
 
     def _read_file(self, file_path: str) -> str:
+        """Read a config file without its comment lines.
+
+        Lines starting with # or // are ignored.
+
+        Args:
+            file_path: path of the config file.
+
+        Returns:
+            The text of the file, ready for the JSON parser.
+        """
         text = ""
 
         with open(file_path, "r") as file:
             for line in file:
                 stripped = line.strip()
 
-                if not stripped or stripped.startswith(("#","//")):
+                if not stripped or stripped.startswith(("#", "//")):
                     continue
 
                 text += stripped
@@ -82,6 +108,14 @@ class Config:
         return text
 
     def _validate(self, new_values: Dict[str, Any]) -> None:
+        """Keep the valid values of the file and ignore the others.
+
+        Unknown keys are ignored, and invalid values are replaced by the
+        defaults, with a warning.
+
+        Args:
+            new_values: the content of the config file.
+        """
         for key, value in new_values.items():
 
             if key not in self.default_values:
@@ -113,6 +147,15 @@ class Config:
                 )
 
     def _is_valid(self, key: str, value: Any) -> bool:
+        """Tell if a value is acceptable for a config key.
+
+        Args:
+            key: name of the setting.
+            value: the value found in the file.
+
+        Returns:
+            True if the value can be used, otherwise False.
+        """
         if key == "highscore_filename":
             return isinstance(value, str) and bool(value.strip())
 
@@ -132,6 +175,14 @@ class Config:
         return False
 
     def _validate_levels(self, levels: Any) -> bool:
+        """Tell if the list of levels can be used.
+
+        Args:
+            levels: the value of the 'level' key.
+
+        Returns:
+            True if there are at least 10 levels with usable sizes.
+        """
         if not isinstance(levels, list) or len(levels) < 10:
             print("[Warning] Invalid 'level'."
                   "At least 10 levels are required. Using default levels."
@@ -189,4 +240,12 @@ class Config:
         return True
 
     def get(self, key: str) -> Any:
+        """Return the value of a setting, or its default value.
+
+        Args:
+            key: name of the setting.
+
+        Returns:
+            The value of the setting.
+        """
         return self.data.get(key, self.default_values.get(key))
