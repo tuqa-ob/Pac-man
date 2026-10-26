@@ -18,6 +18,7 @@ class Game:
         Args:
             config: the game settings.
         """
+        self._seed_rng = random.Random()
         self._config = config
         self.current_level = 1
         self.score = 0
@@ -45,7 +46,7 @@ class Game:
         if self.current_level == 1:
             seed = self._config.get("seed")
         else:
-            seed = random.randint(0, 1000)
+            seed = self._seed_rng.randint(1, 1_000_000)
         maze_adapter = MazeAdapter(lev_width, lev_height, seed)
         maze_adapter.generate()
         self.maze = maze_adapter
@@ -118,7 +119,8 @@ class Game:
                     self.player = Player(
                         self.level.width, self.level.height
                     )
-                    ghost.reset_position()
+                    for ghost in self.ghosts:
+                        ghost.reset_position()
                     break
                 elif ghost.state == GhostState.EDIBLE:
                     self.score += self._config.get("points_per_ghost")
@@ -142,6 +144,7 @@ class Game:
             return False
 
         self.current_level += 1
+        self.lives = self._config.get("lives")
         self.load_level()
         return True
 

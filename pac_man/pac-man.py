@@ -1,5 +1,7 @@
 import sys
+import signal
 import pygame
+import types
 from pm_game.config import Config
 from pm_game.game import Game
 from pm_game.input import change_dir
@@ -11,6 +13,10 @@ from pm_game.menu import (
     make_pause_rects,
     make_rects,
 )
+
+
+def handle_exit_signal(signum: int, frame: types.FrameType | None) -> None:
+    raise KeyboardInterrupt
 
 
 def main() -> None:
@@ -93,8 +99,11 @@ def main() -> None:
                 state = "menu"
 
             elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_z and (
+                        event.mod & pygame.KMOD_CTRL):
+                    running = False
 
-                if state in ("highscores", "instructions"):
+                elif state in ("highscores", "instructions"):
                     if event.key == pygame.K_ESCAPE:
                         state = "menu"
 
@@ -207,4 +216,10 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    signal.signal(signal.SIGTSTP, handle_exit_signal)
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        pygame.quit()
