@@ -214,7 +214,7 @@ class Config:
 
             elif (
                     type(level["width"]) is not int
-                    or level["width"] <= 0):
+                    or level["width"] < 5):
                 level["width"] = default_level["width"]
                 print(
                     f"[Warning] Invalid 'width' in level {level_number}. "
@@ -230,7 +230,7 @@ class Config:
 
             elif (
                     type(level["height"]) is not int
-                    or level["height"] <= 0):
+                    or level["height"] < 5):
                 level["height"] = default_level["height"]
                 print(
                     f"[Warning] Invalid 'height' in level {level_number}. "

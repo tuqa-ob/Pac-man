@@ -3,7 +3,7 @@ VENV = .venv
 PYTHON = $(VENV)/bin/python3
 PIP = $(VENV)/bin/pip
 
-.PHONY: all install run debug lint clean venv shell lint-strict
+.PHONY: all install run debug lint clean venv shell lint-strict build
 
 all: install
 
@@ -12,10 +12,14 @@ venv:
 
 install: venv
 	$(PIP) install --upgrade pip
-	$(PIP) install -r requirements.txt || $(PIP) install flake8 mypy pytest pygame
+	$(PIP) install -r requirements.txt
+	$(PIP) install pyinstaller
 
 run: venv
 	$(PYTHON) $(NAME) config.json
+
+build: venv
+	$(PYTHON) -m PyInstaller --noconfirm --clean PacMan.spec
 
 debug: venv
 	$(PYTHON) -m pdb $(NAME) config.json
