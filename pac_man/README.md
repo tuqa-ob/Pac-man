@@ -218,7 +218,6 @@ Mazes are generated with the **A-Maze-ing** package provided by the subject. It 
 - **Levels:** when all gums are eaten the next level is loaded with a new maze; finishing the last level wins the game.
 - **Assets:** images and the `BebasNeue-Regular.ttf` font are stored in `assets/`.
 
-> TODO: add how long the super pac-gum effect lasts, the speed of entities, and what happens to eaten ghosts.
 
 ## General Software Architecture
 
@@ -245,7 +244,6 @@ Mazes are generated with the **A-Maze-ing** package provided by the subject. It 
     └── render.py       # Drawing everything on screen
 ```
 
-> TODO: verify each description above against your real code and add the relationships between classes (for example, `Game` uses `Level`, `Player`, `Ghost`, `Menu`, `Render` and `HighScore`).
 
 ## Project Management
 
